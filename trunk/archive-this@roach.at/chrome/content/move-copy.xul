@@ -18,6 +18,7 @@
     buttonlabelaccept="&ok;"
     buttonlabelcancel="&cancel;"
     onload="ArchiveThisMoveCopy.onLoad();"
+    onunload="ArchiveThisMoveCopy.shutdown();"
     ondialogaccept="ArchiveThisMoveCopy.onAccept();"
     >
 

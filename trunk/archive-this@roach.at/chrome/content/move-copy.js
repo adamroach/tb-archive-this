@@ -1,5 +1,10 @@
 "use strict";
 
+// NOTE: The console logging in this is active only if the debug
+// configuration option was active when Thunderbird was started.
+// We're not going to bother processing configuration callbacks
+// here just for debugging state.
+
 var ArchiveThisMoveCopy =
 {
   folders : new Array(),
@@ -9,6 +14,15 @@ var ArchiveThisMoveCopy =
   archiveThis : null,
   currAccount : "",
   currCandidate : 0,
+  dbConn : null,
+  dbSelect: null,
+  dbResults: null,
+  dbQueryComplete: false,
+  console: Components.classes["@mozilla.org/consoleservice;1"].
+             getService(Components.interfaces.nsIConsoleService),
+  debug: false,
+  prefs: null,
+  fragment: null,
 
   sortFolders : function(a, b)
   {
@@ -29,6 +43,45 @@ var ArchiveThisMoveCopy =
   onLoad: function()
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
+
+    if (!this.prefs)
+    {
+      this.prefs = Components.classes["@mozilla.org/preferences-service;1"].
+        getService(Components.interfaces.nsIPrefService).getBranch("archive-this.");
+      this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+    }
+
+    this.debug = this.prefs.getBoolPref("debug");
+
+
+    if (this.dbConn === null)
+    {
+      if (this.debug)
+      {
+        this.console.logStringMessage("Archive This: opening database");
+      }
+
+      Components.utils.import("resource://gre/modules/Services.jsm");
+      Components.utils.import("resource://gre/modules/FileUtils.jsm");
+       
+      var file = FileUtils.getFile("ProfD", ["archive_this.sqlite"]);
+      this.dbConn = Services.storage.openDatabase(file);
+
+      try
+      {
+        // Create the table for mapping string fragments to preferred folders
+        this.dbConn.executeSimpleSQL("CREATE TABLE IF NOT EXISTS stringmap (fragment TEXT, fraglen INTEGER, folder TEXT, priority INTEGER, timestamp INTEGER)");
+      }
+      catch (e)
+      {
+        if (this.debug)
+        {
+          this.console.logStringMessage("Archive This: Error creating table: " + e);
+        }
+      }
+
+      this.dbSelect = this.dbConn.createStatement("SELECT * FROM stringmap WHERE fragment LIKE :frag ORDER BY fraglen, priority");
+    }
 
     this.archiveThis = window.arguments[0];
     var headers = window.arguments[1];
@@ -181,6 +234,63 @@ var ArchiveThisMoveCopy =
     {
       this.setCandidate(this.currCandidate);
     }
+
+    var f = this.fragment?this.fragment:document.getElementById("search").value;
+    this.dbSelect.params.frag = f + "%";
+    this.dbResults = new Array();
+    this.dbQueryComplete = false;
+    this.dbSelect.executeAsync({
+      handleResult: function (resultSet)
+      {
+        ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT results");
+        var row;
+        while (row = resultSet.getNextRow())
+        {
+          ArchiveThisMoveCopy.handleRow(row);
+        }
+      },
+      handleError: function (error)
+      {
+        ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT error: " + aError.message);
+      },
+      handleCompletion: function (reason)
+      {
+        // Mark set as complete so we know it's safe to store
+        if (reason == Components.interfaces.mozIStorageStatementCallback.REASON_FINISHED)
+        {
+          ArchiveThisMoveCopy.dbQueryComplete = true;
+        }
+        else
+        {
+          ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT Failed, reason = " + reason);
+        }
+      }
+    });
+  },
+
+  handleRow : function (row)
+  {
+    var f = this.fragment?this.fragment:document.getElementById("search").value;
+    var record = 
+    {
+      fragment : row.getResultByName("fragment"),
+      fraglen : row.getResultByName("fraglen"),
+      folder : row.getResultByName("folder"),
+      priority : row.getResultByName("priority"),
+      timestamp : row.getResultByName("timestamp")
+    };
+    this.debug && this.console.logStringMessage("Row match: " + this.dump(record));
+
+    if (record['fragment'] == f)
+    {
+      this.dbResults.push(record);
+    }
+
+    // TODO Update folder list
+    var list = document.getElementById('folder-list');
+    // XXX Find entry
+    // XXX Remove entry from folder list
+    // XXX Re-insert at position corresponding to row #
   },
 
   onSearchKeyPress : function(event)
@@ -214,12 +324,30 @@ var ArchiveThisMoveCopy =
 
     if (offset != 0)
     {
+      if (!this.fragment)
+      {
+        this.fragment = document.getElementById("search").value;
+
+        if (this.debug)
+        {
+          this.console.logStringMessage("Archive This: saving typed fragment (kb) = " + this.fragment);
+        }
+      }
+
       if (list.selectedItem == null)
       {
         list.selectedIndex = 0;
       }
       list.moveByOffset(offset, true, false);
       return false;
+    }
+    else if (event.keyCode == 0)
+    {
+      if (0 && this.debug)
+      {
+        this.console.logStringMessage("Archive This: resetting saved fragment: " + event.keyCode);
+      }
+      this.fragment = null;
     }
 
     return true;
@@ -297,16 +425,87 @@ var ArchiveThisMoveCopy =
     var list = document.getElementById('folder-list');
     var search = document.getElementById("search");
 
-    search.value = list.getSelectedItem(0).label;
-    search.select();
+    if (!this.fragment)
+    {
+      this.fragment = search.value;
 
-    this.setCandidate(list.getSelectedItem(0).value);
+      if (this.debug)
+      {
+        this.console.logStringMessage("Archive This: saving typed fragment = " + this.fragment);
+      }
+    }
+
+    if (list.getSelectedItem(0) != null)
+    {
+      search.value = list.getSelectedItem(0).label;
+      this.setCandidate(list.getSelectedItem(0).value);
+      search.select();
+    }
+
+  },
+
+  updateStringmap: function(fragment, folder)
+  {
+    if (this.debug)
+    {
+      this.console.logStringMessage("Archive This: Associating fragment " +
+        fragment + " with folder " + folder);
+    }
+
+    // TODO Update stringmap table
+    if (ArchiveThisMoveCopy.dbQueryComplete)
+    {
+      if (this.dbResults.length == 0)
+      {
+        this.dbResults.push({
+          fragment : fragment,
+          fraglen : fragment.length,
+          folder : folder,
+          priority : 1,
+          timestamp : new Date().getTime()
+        });
+      }
+      else if (this.dbResults[1]['folder'] == folder)
+      {
+        // already 2nd -- swap priorities of 1st and 2nd element
+        this.dbResults[1]['priority'] = 1;
+        this.dbResults[1]['timestamp'] = new Date().getTime();
+        this.dbResults[0]['priority'] = 2;
+      }
+      else
+      {
+        // XXX Iterate over array and figure out if already in array;
+        // if so, promote to 2nd place
+
+        // XXX If not present in array. Put in 2nd place, knock off 5th
+        // place entry (if present)
+      }
+
+      if (this.debug)
+      {
+        for (var i = 0; i < this.dbResults.length; i++)
+        {
+          this.console.logStringMessage("Archive This: Fragment record: \n" 
+            + this.dump(this.dbResults[i]));
+        }
+      }
+
+      // XXX Delete existing entries
+
+      // XXX Insert new entries
+    }
   },
 
   onAccept: function()
   {
     var candidate = document.getElementById('candidate');
     this.archiveThis.selectedFolder = candidate.tooltipText;
+
+    // Store the fragment-to-folder binding in the database
+    var f = this.fragment?this.fragment:document.getElementById("search").value;
+
+    this.updateStringmap(f, candidate.tooltipText);
+
     return true;
   },
 
@@ -344,6 +543,26 @@ var ArchiveThisMoveCopy =
     }
 
     candidate.tooltipText = this.folders[index].URI;
+  },
+
+  shutdown : function()
+  {
+    if (this.debug)
+    {
+      this.console.logStringMessage("Archive This: closing database");
+    }
+    this.dbConn.asyncClose();
+    this.dbConn = null;
+  },
+
+  dump : function (o)
+  {
+    var str = "";
+    for (var f in o)
+    {
+      str += "  " + f + ": " + o[f] + "\n";
+    }
+    return str;
   }
 
 }
