@@ -9,6 +9,7 @@ var ArchiveThisMoveCopy =
 {
   folders : new Array(),
   longFolderNames : new Array(),
+  matchedIndices : new Array(),
   maxFolderNameLength : 0,
   mode : "move",
   archiveThis : null,
@@ -19,13 +20,14 @@ var ArchiveThisMoveCopy =
   dbResults: null,
   dbQueryComplete: false,
   dbMaxPriority: 5,
+  dbRowCount: 0,
   console: Components.classes["@mozilla.org/consoleservice;1"].
              getService(Components.interfaces.nsIConsoleService),
   debug: false,
   prefs: null,
   fragment: null,
 
-  sortFolders : function(a, b)
+  sortFolders : function sortFolders (a, b)
   {
     // Prefer folders in the same account as the selected message
     if (   (a.server.prettyName == ArchiveThisMoveCopy.currAccount) 
@@ -41,7 +43,7 @@ var ArchiveThisMoveCopy =
     return 0;
   },
 
-  onLoad: function()
+  onLoad: function onLoad()
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
 
@@ -199,18 +201,20 @@ var ArchiveThisMoveCopy =
     dialog.setAttribute("maxwidth", screen.width);
 
     this.setCandidate(0);
+    this.selectMostRecentFolder();
     this.hideFolderList();
   },
 
-  updateList: function()
+  updateList: function updateList()
   {
     var list = document.getElementById('folder-list');
 
     //////////////////////////////////////////////////////////////////////
     // Clear the folder list
-     while(list.hasChildNodes()){
-       list.removeChild(list.firstChild);
-     }
+    while(list.hasChildNodes()){
+      list.removeChild(list.firstChild);
+    }
+    this.matchedIndices = new Array();
 
     //////////////////////////////////////////////////////////////////////
     // Populate the folder list popup
@@ -222,6 +226,7 @@ var ArchiveThisMoveCopy =
       if (this.longFolderNames[i].toLowerCase().indexOf(searchText.toLowerCase()) > -1)
       {
         list.appendItem(this.longFolderNames[i],i);
+        this.matchedIndices.push(i);
 
         if (!bestFound)
         {
@@ -236,12 +241,14 @@ var ArchiveThisMoveCopy =
       this.setCandidate(this.currCandidate);
     }
 
+    // Launch SQL query to find "best" matches from user history
     var f = this.fragment?this.fragment:document.getElementById("search").value;
+    this.dbResults = new Array();
+    this.dbQueryComplete = false;
+    this.dbRowCount = 0;
     if (f.length)
     {
       this.dbSelect.params.frag = f + "%";
-      this.dbResults = new Array();
-      this.dbQueryComplete = false;
       this.dbSelect.executeAsync({
         handleResult: function (resultSet)
         {
@@ -271,7 +278,35 @@ var ArchiveThisMoveCopy =
     }
   },
 
-  handleRow : function (row)
+  selectMostRecentFolder : function selectMostRecentFolder ()
+  {
+    var select = this.dbConn.createStatement("SELECT * FROM stringmap ORDER BY timestamp DESC LIMIT 1");
+    select.executeAsync({
+      handleResult: function (resultSet)
+      {
+        var row = resultSet.getNextRow();
+        if (row)
+        {
+          var folder = row.getResultByName("folder");
+          for (var i in ArchiveThisMoveCopy.folders) 
+          { 
+            if (ArchiveThisMoveCopy.folders[i].URI == folder) 
+            { 
+              ArchiveThisMoveCopy.debug && 
+                ArchiveThisMoveCopy.console.logStringMessage(
+                  "Archive This: Setting initial value to " + folder);
+              ArchiveThisMoveCopy.setCandidate(i); 
+              return;
+            }
+          }
+        }
+      },
+      handleError: function (error) { },
+      handleCompletion: function (reason) { }
+    });
+  },
+
+  handleRow : function handleRow  (row)
   {
     var f = this.fragment?this.fragment:document.getElementById("search").value;
     var record = 
@@ -282,21 +317,41 @@ var ArchiveThisMoveCopy =
       priority : row.getResultByName("priority"),
       timestamp : row.getResultByName("timestamp")
     };
-    this.debug && this.console.logStringMessage("Row match:\n" + this.dump(record));
+    //this.debug && this.console.logStringMessage("Row match:\n" + this.dump(record));
 
     if (record['fragment'] == f)
     {
       this.dbResults.push(record);
     }
 
-    // TODO Update folder list
     var list = document.getElementById('folder-list');
-    // XXX Find entry
-    // XXX Remove entry from folder list
-    // XXX Re-insert at position corresponding to row #
+
+    // Find entry and move it to the top of the list
+    for (var i = 0; i < list.getRowCount(); i++)
+    {
+      var folder = this.folders[this.matchedIndices[i]].URI;
+      if (folder == record.folder && i != this.dbRowCount)
+      {
+        var folderIndex = this.matchedIndices[i];
+        this.debug && this.console.logStringMessage("Archive This: Moving item " + i +
+          " ("+this.longFolderNames[folderIndex]+") to " + this.dbRowCount);
+
+        list.removeItemAt(i);
+        list.insertItemAt(this.dbRowCount,
+                          this.longFolderNames[folderIndex],
+                          folderIndex);
+
+        this.matchedIndices.splice(i,1);
+        this.matchedIndices.splice(this.dbRowCount,0,folderIndex);
+
+      }
+    }
+
+    this.setCandidate(this.matchedIndices[0]);
+    this.dbRowCount++;
   },
 
-  onSearchKeyPress : function(event)
+  onSearchKeyPress : function onSearchKeyPress (event)
   {
     var list = document.getElementById('folder-list');
     var panel = document.getElementById("folder-panel");
@@ -311,6 +366,7 @@ var ArchiveThisMoveCopy =
       case event.DOM_VK_PAGE_UP:   offset = -(list.getNumberOfVisibleRows()); break;
 
       case event.DOM_VK_ENTER:
+      case event.DOM_VK_RETURN:
       case event.DOM_VK_TAB:
         this.hideFolderList();
         return true;
@@ -356,12 +412,12 @@ var ArchiveThisMoveCopy =
     return true;
   },
 
-  onSearchBlur : function()
+  onSearchBlur : function onSearchBlur ()
   {
     this.hideFolderList();
   },
 
-  hideFolderList : function()
+  hideFolderList : function hideFolderList ()
   {
     var stateChanged = false;
 
@@ -386,7 +442,7 @@ var ArchiveThisMoveCopy =
     return stateChanged;
   },
 
-  showFolderList : function()
+  showFolderList : function showFolderList ()
   {
     var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
                   .getService(Components.interfaces.nsIXULAppInfo);
@@ -407,7 +463,7 @@ var ArchiveThisMoveCopy =
 
   },
 
-  onFolderListShowing : function()
+  onFolderListShowing : function onFolderListShowing ()
   {
     var panel = document.getElementById("folder-panel");
     var search = document.getElementById("search");
@@ -418,12 +474,11 @@ var ArchiveThisMoveCopy =
     this.updateList();
   },
 
-  onFolderListShown : function()
+  onFolderListShown : function onFolderListShown ()
   {
-    var list = document.getElementById('folder-list');
   },
 
-  onFolderListSelect : function()
+  onFolderListSelect : function onFolderListSelect ()
   {
     var list = document.getElementById('folder-list');
     var search = document.getElementById("search");
@@ -447,8 +502,9 @@ var ArchiveThisMoveCopy =
 
   },
 
-  updateStringmap: function(fragment, folder)
+  updateStringmap: function updateStringmap(fragment, folder)
   {
+    if (fragment.length == 0) { return; }
     if (this.debug)
     {
       this.console.logStringMessage("Archive This: Associating fragment " +
@@ -460,6 +516,7 @@ var ArchiveThisMoveCopy =
     {
       if (this.dbResults.length == 0)
       {
+        // No matches in the set -- simply insert a new record
         this.dbResults.push({
           fragment : fragment,
           fraglen : fragment.length,
@@ -468,23 +525,22 @@ var ArchiveThisMoveCopy =
           timestamp : new Date().getTime()
         });
       }
-      else if (this.dbResults.length > 1 && this.dbResults[1]['folder'] == folder)
+      else if (this.dbResults.length > 1 && this.dbResults[1].folder == folder)
       {
-        // already 2nd -- swap priorities of 1st and 2nd element
-        this.dbResults[1]['priority'] = 1;
-        this.dbResults[1]['timestamp'] = new Date().getTime();
-        this.dbResults[0]['priority'] = 2;
+        // already 2nd -- swap 1st and 2nd element
+        var tmp = this.dbResults[1];
+        this.dbResults[1] = this.dbResults[0];
+        this.dbResults[0] = tmp;
+        this.dbResults[0].timestamp = new Date().getTime();
       }
-      else if (this.dbResults.length > 0 && this.dbResults[0]['folder'] == folder)
+      else if (this.dbResults.length > 0 && this.dbResults[0].folder == folder)
       {
         // Already in first place, no need to change record priorities. Update date.
-        this.dbResults[0]['timestamp'] = new Date().getTime();
+        this.dbResults[0].timestamp = new Date().getTime();
       }
       else
       {
-        // Need to put in 2nd place. Rather than changing the priorties in-place,
-        // it's easier to reorder them and then renumber the priorities once they're
-        // in the right order.
+        // Need to put in 2nd place.
 
         var moved = false;
         // Iterate over array and figure out if already in array;
@@ -512,23 +568,31 @@ var ArchiveThisMoveCopy =
             timestamp : new Date().getTime()
           };
           this.dbResults.splice(1,0,temp);
-          if (this.dbResults.length > this.dbMaxPriority)
-          {
-            this.dbResults.length = this.dbMaxPriority;
-          }
         }
 
-        // Renumber priorities
-        for (i = 0; i < this.dbResults.length; i++)
-        {
-          this.dbResults[i]['priority'] = i+1;
-        }
+      }
+
+      // Trim off priorities that are too high
+      if (this.dbResults.length > this.dbMaxPriority)
+      {
+        this.dbResults.length = this.dbMaxPriority;
+      }
+
+      // Renumber priorities
+      // (it's easier to reorder records and then renumber the priorities
+      // once they're in the right order).
+      for (i = 0; i < this.dbResults.length; i++)
+      {
+        this.dbResults[i]['priority'] = i+1;
       }
 
       // Delete existing entries
       var del = this.dbConn.createStatement("DELETE FROM stringmap WHERE fragment = :frag");
       del.params.frag = fragment;
-      del.executeAsync({handleCompletion: function(r){}});
+      // Synchronous execution -- no results, so it will go quickly.
+      // This must complete before the inserts are fired off, and
+      // messing around with callbacks would be a pain.
+      del.executeStep();
 
       // Insert new entries
       var ins = this.dbConn.createStatement("INSERT INTO stringmap VALUES (:fragment, :fraglen, :folder, :priority, :timestamp)");
@@ -539,11 +603,7 @@ var ArchiveThisMoveCopy =
         ins.params.folder = this.dbResults[i].folder;
         ins.params.priority = this.dbResults[i].priority;
         ins.params.timestamp = this.dbResults[i].timestamp;
-        if (this.debug)
-        {
-          this.console.logStringMessage("Archive This: Inserting fragment record:\n" 
-            + this.dump(this.dbResults[i]));
-        }
+        // this.debug && this.console.logStringMessage("Archive This: Inserting fragment record:\n" + this.dump(this.dbResults[i]));
         ins.executeAsync({handleCompletion: function(r){}});
       }
     }
@@ -553,10 +613,12 @@ var ArchiveThisMoveCopy =
     }
   },
 
-  onAccept: function()
+  onAccept: function onAccept()
   {
     var candidate = document.getElementById('candidate');
     this.archiveThis.selectedFolder = candidate.tooltipText;
+    this.debug && this.console.logStringMessage("Archive This: Selected folder = " 
+      + candidate.tooltipText);
 
     // Store the fragment-to-folder binding in the database
     var f = this.fragment?this.fragment:document.getElementById("search").value;
@@ -566,7 +628,7 @@ var ArchiveThisMoveCopy =
     return true;
   },
 
-  setCandidate : function(index)
+  setCandidate : function setCandidate (index)
   {
     this.currCandidate = index;
     var candidate = document.getElementById('candidate');
@@ -602,17 +664,14 @@ var ArchiveThisMoveCopy =
     candidate.tooltipText = this.folders[index].URI;
   },
 
-  shutdown : function()
+  shutdown : function shutdown ()
   {
-    if (this.debug)
-    {
-      this.console.logStringMessage("Archive This: closing database");
-    }
+    this.debug && this.console.logStringMessage("Archive This: closing database");
     this.dbConn.asyncClose();
     this.dbConn = null;
   },
 
-  dump : function (o)
+  dump : function dump  (o)
   {
     var str = "";
     for (var f in o)
