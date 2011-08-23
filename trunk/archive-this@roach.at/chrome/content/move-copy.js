@@ -18,6 +18,7 @@ var ArchiveThisMoveCopy =
   dbSelect: null,
   dbResults: null,
   dbQueryComplete: false,
+  dbMaxPriority: 5,
   console: Components.classes["@mozilla.org/consoleservice;1"].
              getService(Components.interfaces.nsIConsoleService),
   debug: false,
@@ -236,36 +237,38 @@ var ArchiveThisMoveCopy =
     }
 
     var f = this.fragment?this.fragment:document.getElementById("search").value;
-    this.dbSelect.params.frag = f + "%";
-    this.dbResults = new Array();
-    this.dbQueryComplete = false;
-    this.dbSelect.executeAsync({
-      handleResult: function (resultSet)
-      {
-        ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT results");
-        var row;
-        while (row = resultSet.getNextRow())
+    if (f.length)
+    {
+      this.dbSelect.params.frag = f + "%";
+      this.dbResults = new Array();
+      this.dbQueryComplete = false;
+      this.dbSelect.executeAsync({
+        handleResult: function (resultSet)
         {
-          ArchiveThisMoveCopy.handleRow(row);
-        }
-      },
-      handleError: function (error)
-      {
-        ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT error: " + aError.message);
-      },
-      handleCompletion: function (reason)
-      {
-        // Mark set as complete so we know it's safe to store
-        if (reason == Components.interfaces.mozIStorageStatementCallback.REASON_FINISHED)
+          var row;
+          while (row = resultSet.getNextRow())
+          {
+            ArchiveThisMoveCopy.handleRow(row);
+          }
+        },
+        handleError: function (error)
         {
-          ArchiveThisMoveCopy.dbQueryComplete = true;
-        }
-        else
+          ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT error: " + aError.message);
+        },
+        handleCompletion: function (reason)
         {
-          ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT Failed, reason = " + reason);
+          // Mark set as complete so we know it's safe to store
+          if (reason == Components.interfaces.mozIStorageStatementCallback.REASON_FINISHED)
+          {
+            ArchiveThisMoveCopy.dbQueryComplete = true;
+          }
+          else
+          {
+            ArchiveThisMoveCopy.debug && ArchiveThisMoveCopy.console.logStringMessage("Archive This: SELECT Failed, reason = " + reason);
+          }
         }
-      }
-    });
+      });
+    }
   },
 
   handleRow : function (row)
@@ -279,7 +282,7 @@ var ArchiveThisMoveCopy =
       priority : row.getResultByName("priority"),
       timestamp : row.getResultByName("timestamp")
     };
-    this.debug && this.console.logStringMessage("Row match: " + this.dump(record));
+    this.debug && this.console.logStringMessage("Row match:\n" + this.dump(record));
 
     if (record['fragment'] == f)
     {
@@ -465,7 +468,7 @@ var ArchiveThisMoveCopy =
           timestamp : new Date().getTime()
         });
       }
-      else if (this.dbResults[1]['folder'] == folder)
+      else if (this.dbResults.length > 1 && this.dbResults[1]['folder'] == folder)
       {
         // already 2nd -- swap priorities of 1st and 2nd element
         this.dbResults[1]['priority'] = 1;
@@ -481,18 +484,27 @@ var ArchiveThisMoveCopy =
         // place entry (if present)
       }
 
-      if (this.debug)
+      // Delete existing entries
+      var del = this.dbConn.createStatement("DELETE FROM stringmap WHERE fragment = :frag");
+      del.params.frag = fragment;
+      del.executeAsync({handleCompletion: function(r){}});
+
+      // Insert new entries
+      var ins = this.dbConn.createStatement("INSERT INTO stringmap VALUES (:fragment, :fraglen, :folder, :priority, :timestamp)");
+      for (var i = 0; i < this.dbResults.length; i++)
       {
-        for (var i = 0; i < this.dbResults.length; i++)
+        ins.params.fragment = this.dbResults[i].fragment;
+        ins.params.fraglen = this.dbResults[i].fraglen;
+        ins.params.folder = this.dbResults[i].folder;
+        ins.params.priority = this.dbResults[i].priority;
+        ins.params.timestamp = this.dbResults[i].timestamp;
+        if (this.debug)
         {
-          this.console.logStringMessage("Archive This: Fragment record: \n" 
+          this.console.logStringMessage("Archive This: Inserting fragment record:\n" 
             + this.dump(this.dbResults[i]));
         }
+        ins.executeAsync({handleCompletion: function(r){}});
       }
-
-      // XXX Delete existing entries
-
-      // XXX Insert new entries
     }
   },
 
