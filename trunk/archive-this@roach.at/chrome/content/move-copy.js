@@ -455,7 +455,7 @@ var ArchiveThisMoveCopy =
         fragment + " with folder " + folder);
     }
 
-    // TODO Update stringmap table
+    // Update stringmap table
     if (ArchiveThisMoveCopy.dbQueryComplete)
     {
       if (this.dbResults.length == 0)
@@ -475,13 +475,54 @@ var ArchiveThisMoveCopy =
         this.dbResults[1]['timestamp'] = new Date().getTime();
         this.dbResults[0]['priority'] = 2;
       }
+      else if (this.dbResults.length > 0 && this.dbResults[0]['folder'] == folder)
+      {
+        // Already in first place, no need to change record priorities. Update date.
+        this.dbResults[0]['timestamp'] = new Date().getTime();
+      }
       else
       {
-        // XXX Iterate over array and figure out if already in array;
-        // if so, promote to 2nd place
+        // Need to put in 2nd place. Rather than changing the priorties in-place,
+        // it's easier to reorder them and then renumber the priorities once they're
+        // in the right order.
 
-        // XXX If not present in array. Put in 2nd place, knock off 5th
+        var moved = false;
+        // Iterate over array and figure out if already in array;
+        // if so, promote to 2nd place
+        for (var i = 2; i < this.dbResults.length && !moved; i++)
+        {
+          if (this.dbResults[i]['folder'] == folder)
+          {
+            var temp = this.dbResults[i];
+            this.dbResults.splice(i,1);
+            this.dbResults.splice(1,0,temp);
+            moved = true;
+          }
+        }
+
+        // If not present in array. Put in 2nd place, knock off 5th
         // place entry (if present)
+        if (!moved)
+        {
+          var temp = {
+            fragment : fragment,
+            fraglen : fragment.length,
+            folder : folder,
+            priority : 2,
+            timestamp : new Date().getTime()
+          };
+          this.dbResults.splice(1,0,temp);
+          if (this.dbResults.length > this.dbMaxPriority)
+          {
+            this.dbResults.length = this.dbMaxPriority;
+          }
+        }
+
+        // Renumber priorities
+        for (i = 0; i < this.dbResults.length; i++)
+        {
+          this.dbResults[i]['priority'] = i+1;
+        }
       }
 
       // Delete existing entries
@@ -505,6 +546,10 @@ var ArchiveThisMoveCopy =
         }
         ins.executeAsync({handleCompletion: function(r){}});
       }
+    }
+    else if (this.debug)
+    {
+      this.console.logStringMessage("Archive This: Not saving string fragment: query incomplete");
     }
   },
 
