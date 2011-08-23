@@ -153,6 +153,36 @@ var ArchiveThisMoveCopy =
     var accountManager = Components.classes ["@mozilla.org/messenger/account-manager;1"].getService(Components.interfaces.nsIMsgAccountManager);
     var servers = accountManager.allServers;
     var numServers = servers.Count();
+
+    //////////////////////////////////////////////////////////////////////
+    // If we're changing folders (instead of moving or copying), then
+    // we want the smart mailboxes to appear in the list. In fact, we
+    // want them to appear first so they're easy to get to.
+    var unifiedFolders = new Array();
+    if (this.mode == 'go' ) { try {
+      var smartServer = accountManager.FindServer("nobody", "smart mailboxes", "none");
+      if (smartServer)
+      {
+        var rootFolder = smartServer.QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
+      }
+
+      if (rootFolder)
+      {
+        var allFolders = Components.classes ["@mozilla.org/supports-array;1"].createInstance (Components.interfaces.nsISupportsArray);
+        rootFolder.ListDescendents (allFolders);
+        var numFolders = allFolders.Count ();
+        for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
+        {
+          var cf = allFolders.GetElementAt(folderIndex).QueryInterface(Components.interfaces.nsIMsgFolder);
+          unifiedFolders.push(cf);
+        }
+      }
+    } catch (ex) {}}
+    unifiedFolders.sort(this.sortFolders);
+
+    //////////////////////////////////////////////////////////////////////
+    // For the remainder of the servers, we simply iterate through the
+    // servers and add each of their folders to the list.
     for (var i = 0; i <numServers; i++)
     {
       var rootFolder = servers.GetElementAt(i).QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
@@ -174,6 +204,7 @@ var ArchiveThisMoveCopy =
     }
 
     this.folders.sort(this.sortFolders);
+    this.folders = unifiedFolders.concat(this.folders);
 
     //////////////////////////////////////////////////////////////////////
     // Make full, long names for each folder
