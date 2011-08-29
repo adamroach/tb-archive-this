@@ -60,13 +60,13 @@ var ArchiveThisFilter =
 
   setComparitor: function(enumValue)
   {
-    var menu = document.getElementById('comparitor');
+    var menu = document.getElementById('archive-this-comparitor');
     menu.selectedIndex = enumValue;
   },
 
   setHeaderName: function(headerName)
   {
-    var menu = document.getElementById('header-name');
+    var menu = document.getElementById('archive-this-header-name');
     var selections = menu.firstChild.childNodes;
 
     for (var i=0; i<selections.length; i++)
@@ -84,7 +84,7 @@ var ArchiveThisFilter =
   {
     this.setHeaderName(window.arguments[0]);
     this.setComparitor(window.arguments[1]);
-    document.getElementById('header-value').setAttribute("value",window.arguments[2]);
+    document.getElementById('archive-this-header-value').setAttribute("value",window.arguments[2]);
     this.SetPickerElement("filterFolder",window.arguments[3]);
 
     this.header = window.arguments[5];
@@ -108,7 +108,7 @@ var ArchiveThisFilter =
       if (val)
       {
         this.setHeaderName(candidates[i]);
-        document.getElementById('header-value').
+        document.getElementById('archive-this-header-value').
           setAttribute("value",this.trimToAngleBrackets(val));
         return;
       }
@@ -117,7 +117,7 @@ var ArchiveThisFilter =
     // If we haven't found a match yet, we punt and use "From" as
     // our best guess.
     this.setHeaderName("From");
-    document.getElementById('header-value').setAttribute("value",this.trimToAngleBrackets(this.header.mime2DecodedAuthor));
+    document.getElementById('archive-this-header-value').setAttribute("value",this.trimToAngleBrackets(this.header.mime2DecodedAuthor));
   },
 
   // In most cases, if there is something in angle brackets,
@@ -143,7 +143,7 @@ var ArchiveThisFilter =
       return;
     }
 
-    var headerName = document.getElementById('header-name').selectedItem.getAttribute("label");
+    var headerName = document.getElementById('archive-this-header-name').selectedItem.getAttribute("label");
     var headerValue;
     switch (headerName)
     {
@@ -169,16 +169,16 @@ var ArchiveThisFilter =
 
     if (headerValue != null)
     {
-      document.getElementById('header-value').setAttribute("value",this.trimToAngleBrackets(headerValue));
+      document.getElementById('archive-this-header-value').setAttribute("value",this.trimToAngleBrackets(headerValue));
     }
   },
 
   onAccept: function()
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
-    var headerName = document.getElementById('header-name').selectedItem.getAttribute("label");
-    var comparitor = document.getElementById('comparitor').selectedIndex;
-    var headerValue = document.getElementById('header-value').value;
+    var headerName = document.getElementById('archive-this-header-name').selectedItem.getAttribute("label");
+    var comparitor = document.getElementById('archive-this-comparitor').selectedIndex;
+    var headerValue = document.getElementById('archive-this-header-value').value;
     var folder = document.getElementById('filterFolder').getAttribute("uri");
 
     if (headerValue.length < 1)

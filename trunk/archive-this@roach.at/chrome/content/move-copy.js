@@ -94,7 +94,7 @@ var ArchiveThisMoveCopy =
 
     //////////////////////////////////////////////////////////////////////
     // Set up the window according to the selected mode
-    var description = document.getElementById("mode")
+    var description = document.getElementById("archive-this-mode")
     var dialog = document.getElementById("archive-this-move-copy");
     switch (this.mode)
     {
@@ -109,8 +109,8 @@ var ArchiveThisMoveCopy =
         break;
 
       case 'go':
-        document.getElementById("header-grid").hidden = true;
-        document.getElementById("header-sep").hidden = true;
+        document.getElementById("archive-this-header-grid").hidden = true;
+        document.getElementById("archive-this-header-sep").hidden = true;
         description.value=this.s.getString("goToString")+": ";
         dialog.setAttribute("title", this.s.getString("goToTitleString"));
         break;
@@ -141,10 +141,10 @@ var ArchiveThisMoveCopy =
       if (account != headers[i].folder.server.prettyName) { account = '<'+this.s.getString("severalString")+'>'; }
     }
 
-    document.getElementById("subject").setAttribute("value",subject);
-    document.getElementById("from").setAttribute("value",from);
-    document.getElementById("to").setAttribute("value",to);
-    document.getElementById("account").setAttribute("value",account);
+    document.getElementById("archive-this-subject").setAttribute("value",subject);
+    document.getElementById("archive-this-from").setAttribute("value",from);
+    document.getElementById("archive-this-to").setAttribute("value",to);
+    document.getElementById("archive-this-account").setAttribute("value",account);
     this.currAccount = account;
 
     //////////////////////////////////////////////////////////////////////
@@ -238,7 +238,7 @@ var ArchiveThisMoveCopy =
 
   updateList: function updateList()
   {
-    var list = document.getElementById('folder-list');
+    var list = document.getElementById('archive-this-folder-list');
 
     //////////////////////////////////////////////////////////////////////
     // Clear the folder list
@@ -249,7 +249,7 @@ var ArchiveThisMoveCopy =
 
     //////////////////////////////////////////////////////////////////////
     // Populate the folder list popup
-    var searchText = document.getElementById("search").value;
+    var searchText = document.getElementById("archive-this-search").value;
     var bestFound = false;
 
     for (var i in this.folders)
@@ -273,7 +273,7 @@ var ArchiveThisMoveCopy =
     }
 
     // Launch SQL query to find "best" matches from user history
-    var f = this.fragment?this.fragment:document.getElementById("search").value;
+    var f = this.fragment?this.fragment:document.getElementById("archive-this-search").value;
     this.dbResults = new Array();
     this.dbQueryComplete = false;
     this.dbRowCount = 0;
@@ -339,7 +339,7 @@ var ArchiveThisMoveCopy =
 
   handleRow : function handleRow  (row)
   {
-    var f = this.fragment?this.fragment:document.getElementById("search").value;
+    var f = this.fragment?this.fragment:document.getElementById("archive-this-search").value;
     var record = 
     {
       fragment : row.getResultByName("fragment"),
@@ -355,7 +355,7 @@ var ArchiveThisMoveCopy =
       this.dbResults.push(record);
     }
 
-    var list = document.getElementById('folder-list');
+    var list = document.getElementById('archive-this-folder-list');
 
     // Find entry and move it to the top of the list
     for (var i = 0; i < list.getRowCount(); i++)
@@ -384,8 +384,8 @@ var ArchiveThisMoveCopy =
 
   onSearchKeyPress : function onSearchKeyPress (event)
   {
-    var list = document.getElementById('folder-list');
-    var panel = document.getElementById("folder-panel");
+    var list = document.getElementById('archive-this-folder-list');
+    var panel = document.getElementById("archive-this-folder-panel");
     var offset = 0;
 
     // see https://developer.mozilla.org/en/DOM/Event/UIEvent/KeyEvent
@@ -416,7 +416,7 @@ var ArchiveThisMoveCopy =
     {
       if (!this.fragment)
       {
-        this.fragment = document.getElementById("search").value;
+        this.fragment = document.getElementById("archive-this-search").value;
 
         if (this.debug)
         {
@@ -458,13 +458,13 @@ var ArchiveThisMoveCopy =
                                    .getService(Components.interfaces.nsIVersionComparator);
     if(versionChecker.compare(appInfo.version, "3.0b3") >= 0)
     {
-      var panel = document.getElementById("folder-panel");
+      var panel = document.getElementById("archive-this-folder-panel");
       if (panel.state == "open") { stateChanged = true; }
       panel.hidePopup();
     }
     else
     {
-      var panel = document.getElementById("folder-panel");
+      var panel = document.getElementById("archive-this-folder-panel");
       if (!panel.hidden) { stateChanged = true; }
       panel.hidden=true;
       window.sizeToContent();
@@ -481,13 +481,13 @@ var ArchiveThisMoveCopy =
                                    .getService(Components.interfaces.nsIVersionComparator);
     if(versionChecker.compare(appInfo.version, "3.0b3") >= 0)
     {
-      var panel = document.getElementById("folder-panel");
-      var search = document.getElementById("search");
+      var panel = document.getElementById("archive-this-folder-panel");
+      var search = document.getElementById("archive-this-search");
       panel.openPopup(search,'after_start');
     }
     else
     {
-      var panel = document.getElementById("folder-panel");
+      var panel = document.getElementById("archive-this-folder-panel");
       panel.hidden=false;
       window.sizeToContent();
     }
@@ -496,8 +496,8 @@ var ArchiveThisMoveCopy =
 
   onFolderListShowing : function onFolderListShowing ()
   {
-    var panel = document.getElementById("folder-panel");
-    var search = document.getElementById("search");
+    var panel = document.getElementById("archive-this-folder-panel");
+    var search = document.getElementById("archive-this-search");
     panel.sizeTo(search.clientWidth, search.clientHeight*10);
 
     //panel.moveTo(search.clientLeft,search.clientTop+search.clientHeight);
@@ -511,8 +511,8 @@ var ArchiveThisMoveCopy =
 
   onFolderListSelect : function onFolderListSelect ()
   {
-    var list = document.getElementById('folder-list');
-    var search = document.getElementById("search");
+    var list = document.getElementById('archive-this-folder-list');
+    var search = document.getElementById("archive-this-search");
 
     if (!this.fragment)
     {
@@ -646,13 +646,13 @@ var ArchiveThisMoveCopy =
 
   onAccept: function onAccept()
   {
-    var candidate = document.getElementById('candidate');
+    var candidate = document.getElementById('archive-this-candidate');
     this.archiveThis.selectedFolder = candidate.tooltipText;
     this.debug && this.console.logStringMessage("Archive This: Selected folder = " 
       + candidate.tooltipText);
 
     // Store the fragment-to-folder binding in the database
-    var f = this.fragment?this.fragment:document.getElementById("search").value;
+    var f = this.fragment?this.fragment:document.getElementById("archive-this-search").value;
 
     this.updateStringmap(f, candidate.tooltipText);
 
@@ -662,7 +662,7 @@ var ArchiveThisMoveCopy =
   setCandidate : function setCandidate (index)
   {
     this.currCandidate = index;
-    var candidate = document.getElementById('candidate');
+    var candidate = document.getElementById('archive-this-candidate');
 
     // Reset the contents of the candidate field
     candidate.removeAttribute("value");
@@ -671,7 +671,7 @@ var ArchiveThisMoveCopy =
     }
 
     // Generate the new value, with the matched string highlighted
-    var searchText = document.getElementById("search").value;
+    var searchText = document.getElementById("archive-this-search").value;
     var folderName = this.longFolderNames[index];
     var matchStart = this.longFolderNames[index].toLowerCase().
                        indexOf(searchText.toLowerCase());

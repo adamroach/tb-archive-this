@@ -49,7 +49,7 @@
     <row>
       <vbox pack="center" align="end"><label align="end" value="&filter_if;"/></vbox>
       <hbox>
-        <menulist id="header-name" 
+        <menulist id="archive-this-header-name" 
           oncommand="ArchiveThisFilter.headerNameChanged();">
           <menupopup>
             <menuitem label="To or Cc"/>
@@ -76,7 +76,7 @@
           </menupopup>
         </menulist>
       
-        <menulist id="comparitor">
+        <menulist id="archive-this-comparitor">
            <menupopup>
             <menuitem label="&filter_is;" name="comp" value="0"/>
             <menuitem label="&filter_contains;" name="comp" value="1"/>
@@ -84,7 +84,7 @@
           </menupopup>
         </menulist>
       
-        <textbox id="header-value" flex="1"/>
+        <textbox id="archive-this-header-value" flex="1"/>
       </hbox>
     </row>
     <row>

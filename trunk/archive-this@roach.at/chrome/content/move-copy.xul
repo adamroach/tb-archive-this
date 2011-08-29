@@ -41,7 +41,7 @@
           src="chrome://archive-this/content/move-copy.js"/>
 
 <vbox>
-<grid flex="1" id="header-grid">
+<grid flex="1" id="archive-this-header-grid">
   <columns>
     <column flex="1"/>
     <column flex="1"/>
@@ -49,24 +49,24 @@
   <rows>
     <row flex="1">
       <vbox pack="start" align="end"><label class="header" value="&move_copy_subject;:"/></vbox>
-      <vbox pack="start"><label id="subject" value="[subject]"/></vbox>
+      <vbox pack="start"><label id="archive-this-subject" value="[subject]"/></vbox>
     </row>
     <row flex="1">
       <vbox pack="start" align="end"><label class="header" value="&move_copy_from;:"/></vbox>
-      <vbox pack="start"><label id="from" value="[from]"/></vbox>
+      <vbox pack="start"><label id="archive-this-from" value="[from]"/></vbox>
     </row>
     <row flex="1">
       <vbox pack="start" align="end"><label class="header" value="&move_copy_to;:"/></vbox>
-      <vbox pack="start"><label id="to" value="[to]"/></vbox>
+      <vbox pack="start"><label id="archive-this-to" value="[to]"/></vbox>
     </row>
     <row flex="1">
       <vbox pack="start" align="end"><label class="header" value="&move_copy_account;:"/></vbox>
-      <vbox pack="start"><label id="account" value="[account]"/></vbox>
+      <vbox pack="start"><label id="archive-this-account" value="[account]"/></vbox>
     </row>
   </rows>
 </grid>
 
-<separator class="groove" id="header-sep"/>
+<separator class="groove" id="archive-this-header-sep"/>
 
 <grid>
   <columns>
@@ -75,14 +75,14 @@
   </columns>
   <rows>
     <row>
-      <vbox pack="start" align="end"><description id="mode" class="header" value="Move To: "/></vbox>
-      <vbox pack="start"><description id="candidate">Account/folder/subfolder</description></vbox>
+      <vbox pack="start" align="end"><description id="archive-this-mode" class="header" value="Move To: "/></vbox>
+      <vbox pack="start"><description id="archive-this-candidate">Account/folder/subfolder</description></vbox>
     </row>
     <row>
       <vbox pack="center"><label value="" align="end"/></vbox>
-      <textbox id="search" oninput="ArchiveThisMoveCopy.updateList();"
+      <textbox id="archive-this-search" oninput="ArchiveThisMoveCopy.updateList();"
                onkeypress="return ArchiveThisMoveCopy.onSearchKeyPress(event);"
-               popup="folder-panel" 
+               popup="archive-this-folder-panel" 
                onblur="ArchiveThisMoveCopy.onSearchBlur()"
                />
     </row>
@@ -90,11 +90,11 @@
 </grid>
 </vbox>
 
-<panel id="folder-panel" noautofocus="true"
+<panel id="archive-this-folder-panel" noautofocus="true"
        position="after_start"
        onpopupshowing="ArchiveThisMoveCopy.onFolderListShowing();"
        onpopupshown="ArchiveThisMoveCopy.onFolderListShown();">
-  <listbox id="folder-list" flex="1"
+  <listbox id="archive-this-folder-list" flex="1"
            onselect="ArchiveThisMoveCopy.onFolderListSelect();" />
 </panel>
 
