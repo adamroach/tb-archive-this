@@ -502,7 +502,7 @@ onLoad : function()
   }
 
   var filters = this.prefs.getCharPref("filters").split("||");
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
 
   for (var i=0; i < filters.length; i++)
   {
@@ -555,7 +555,7 @@ onAccept : function()
   this.prefs.setCharPref("keys",this.keys.join('|'));
   this.prefs.setBoolPref("debug",this.debug);
 
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   var filters = new Array();
   for (var i=0; i<list.getRowCount(); i++)
   {
@@ -736,7 +736,7 @@ decorateRule : function (rule)
 {
   if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
 
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   list.ensureElementIsVisible(rule);
   try
   {
@@ -785,7 +785,7 @@ decorateRule : function (rule)
 
 addRule : function (headerName,comparitor,headerValue,folder)
 {
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   var rule = list.appendItem(headerValue,
                   headerName + "|" + comparitor + "|" + headerValue + "|" + folder);
 
@@ -794,7 +794,7 @@ addRule : function (headerName,comparitor,headerValue,folder)
 
 openEditFilter : function()
 {
-  var rule = document.getElementById('filter-list').selectedItem;
+  var rule = document.getElementById('archive-this-filter-list').selectedItem;
   if (!rule) {return; }
   var val = rule.value.split('|',4);
   window.openDialog('chrome://archive-this/content/filter.xul','filter','chrome,modal',
@@ -804,7 +804,7 @@ openEditFilter : function()
 changeCurrentRule : function (headerName,comparitor,headerValue,folder)
 {
   // Modify current entry in list box
-  var rule = document.getElementById('filter-list').selectedItem;
+  var rule = document.getElementById('archive-this-filter-list').selectedItem;
   if (!rule) {return; }
   rule.setAttribute('value', headerName + "|" + comparitor + "|" + 
                              headerValue + "|" + folder) ;
@@ -814,7 +814,7 @@ changeCurrentRule : function (headerName,comparitor,headerValue,folder)
 deleteCurrentRule : function ()
 {
   // Should we ask for confirmation?
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   var victimIndex = list.currentIndex;
   var selecteeIndex;
 
@@ -843,7 +843,7 @@ deleteCurrentRule : function ()
 
 copyCurrentRule : function ()
 {
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   var rule = list.getItemAtIndex(list.currentIndex);
   var clone;
 
@@ -873,7 +873,7 @@ moveRuleDown : function ()
 
 moveRule : function(distance)
 {
-  var list = document.getElementById('filter-list');
+  var list = document.getElementById('archive-this-filter-list');
   var curItem = list.getItemAtIndex(list.currentIndex);
   var swapItem = list.getItemAtIndex(list.currentIndex + distance);
 
@@ -895,12 +895,12 @@ moveRule : function(distance)
 selectionChanged : function ()
 {
   // Change active state of buttons to reflect selection
-  var list = document.getElementById('filter-list');
-  var edit = document.getElementById('edit-button');
-  var copy = document.getElementById('copy-button');
-  var remove = document.getElementById('remove-button');
-  var up = document.getElementById('up-button');
-  var down = document.getElementById('down-button');
+  var list = document.getElementById('archive-this-filter-list');
+  var edit = document.getElementById('archive-this-edit-button');
+  var copy = document.getElementById('archive-this-copy-button');
+  var remove = document.getElementById('archive-this-remove-button');
+  var up = document.getElementById('archive-this-up-button');
+  var down = document.getElementById('archive-this-down-button');
 
   if (list.currentIndex < 0)
   {

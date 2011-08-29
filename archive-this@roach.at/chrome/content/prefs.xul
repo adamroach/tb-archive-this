@@ -56,28 +56,28 @@
   <tabpanel id="archive-this-filter-tab">
     <hbox flex="1">
       <vbox flex="1">
-        <listbox id="filter-list" flex="1"
+        <listbox id="archive-this-filter-list" flex="1"
                 onselect="ArchiveThisPrefs['selectionChanged']();"/>
       </vbox>
       <vbox>
-        <button id="add-button" label="&prefs_add;" 
+        <button id="archive-this-add-button" label="&prefs_add;" 
                 oncommand="ArchiveThisPrefs['openNewFilter']();"/>
 
-        <button id="edit-button" label="&prefs_edit;" disabled="true"
+        <button id="archive-this-edit-button" label="&prefs_edit;" disabled="true"
                 oncommand="ArchiveThisPrefs['openEditFilter']();"/>
 
-        <button id="copy-button" label="&prefs_clone;" disabled="true"
+        <button id="archive-this-copy-button" label="&prefs_clone;" disabled="true"
                 oncommand="ArchiveThisPrefs['copyCurrentRule']();"/>
 
-        <button id="remove-button" label="&prefs_remove;" disabled="true"
+        <button id="archive-this-remove-button" label="&prefs_remove;" disabled="true"
                 oncommand="ArchiveThisPrefs['deleteCurrentRule']();"/>
 
         <spacer flex="1"/>
 
-        <button id="up-button" label="&prefs_move_up;" disabled="true"
+        <button id="archive-this-up-button" label="&prefs_move_up;" disabled="true"
                 oncommand="ArchiveThisPrefs['moveRuleUp']();"/>
 
-        <button id="down-button" label="&prefs_move_down;" disabled="true"
+        <button id="archive-this-down-button" label="&prefs_move_down;" disabled="true"
                 oncommand="ArchiveThisPrefs['moveRuleDown']();"/>
       </vbox>
     </hbox>
