@@ -618,35 +618,35 @@ function mdn_extended_createHeadersFromURI(messageURI) {
     inputStream.init(messageStream);
     var newuri = messageService.streamMessage(messageURI,messageStream, msgWindow, null, false, null);
 
-    var content = "";
+    var message_content = "";
     inputStream.available();
     while (inputStream.available()) {
-        content = content + inputStream.read(512);
-        var p = content.indexOf("\r\n\r\n");
-        var p1 = content.indexOf("\r\r");
-        var p2 = content.indexOf("\n\n");
+        message_content = message_content + inputStream.read(512);
+        var p = message_content.indexOf("\r\n\r\n");
+        var p1 = message_content.indexOf("\r\r");
+        var p2 = message_content.indexOf("\n\n");
         if (p > 0) {
-          content = content.substring(0, p);
+          message_content = message_content.substring(0, p);
           break;
         }
         if (p1 > 0) {
-          content = content.substring(0, p1);
+          message_content = message_content.substring(0, p1);
           break;
         }
         if (p2 > 0) {
-          content = content.substring(0, p2);
+          message_content = message_content.substring(0, p2);
           break;
         }
-        if (content.length > 1024 * 8)
+        if (message_content.length > 1024 * 8)
         {
           throw "Could not find end-of-headers line.";
           return null;
         }
     }
-    content = content + "\r\n";
+    message_content = message_content + "\r\n";
 
     var headers = Components.classes["@mozilla.org/messenger/mimeheaders;1"].createInstance().QueryInterface(Components.interfaces.nsIMimeHeaders);
-    headers.initialize(content, content.length);
+    headers.initialize(message_content, message_content.length);
     return headers;
 }
 
