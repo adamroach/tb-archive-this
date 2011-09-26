@@ -254,16 +254,23 @@ newFilter: function (createIfNotFound)
   }
 
   var selectArray = [];
+  var matches = [];
+
   var header;
   for (var i = 0; i < messageArray.length; i++)
   {
     header = messageArray[i];
     folderUri = this.findFolderUri(messageUriArray[i], header);
-    gFolderDisplay.selectMessage(messageArray[i]);
+    //gFolderDisplay.selectMessage(messageArray[i]);
     if (folderUri.length > 0)
     {
       //MsgMoveMessage(MailUtils.getFolderForURI(folderUri, false));
-      this.moveToFolderByUri(folderUri);
+      //this.moveToFolderByUri(folderUri);
+      if (!matches[folderUri])
+      {
+        matches[folderUri] = [];
+      }
+      matches[folderUri].push(messageArray[i]);
     }
     else
     {
@@ -274,6 +281,13 @@ newFilter: function (createIfNotFound)
       }
     }
   };
+
+  for (i in matches)
+  {
+    //this.debug && this.console.logStringMessage("Archive This: " + matches[i].length + " matches for " + i);
+    gFolderDisplay.selectMessages(matches[i]);
+    this.moveToFolderByUri(i);
+  }
 
   if (selectArray.length > 0)
   {
