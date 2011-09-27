@@ -26,6 +26,7 @@ var ArchiveThisMoveCopy =
   debug: false,
   prefs: null,
   fragment: null,
+  moved: null,
 
   sortFolders : function sortFolders (a, b)
   {
@@ -277,6 +278,7 @@ var ArchiveThisMoveCopy =
     this.dbResults = new Array();
     this.dbQueryComplete = false;
     this.dbRowCount = 0;
+    this.moved = {};
     if (f.length)
     {
       this.dbSelect.params.frag = f + "%";
@@ -355,27 +357,35 @@ var ArchiveThisMoveCopy =
       this.dbResults.push(record);
     }
 
-    var list = document.getElementById('archive-this-folder-list');
-
-    // Find entry and move it to the top of the list
-    for (var i = 0; i < list.getRowCount(); i++)
+    if (this.moved[record.folder])
     {
-      var folder = this.folders[this.matchedIndices[i]].URI;
-      if (folder == record.folder && i != this.dbRowCount)
+      this.debug && this.console.logStringMessage("Archive This: already moved "+ record.folder +"; ignoring entry.");
+    }
+    else
+    {
+      var list = document.getElementById('archive-this-folder-list');
+
+      // Find entry and move it to the top of the list
+      for (var i = 0; i < list.getRowCount(); i++)
       {
-        var folderIndex = this.matchedIndices[i];
-        this.debug && this.console.logStringMessage("Archive This: Moving item " + i +
-          " ("+this.longFolderNames[folderIndex]+") to " + this.dbRowCount);
+        var folder = this.folders[this.matchedIndices[i]].URI;
+        if (folder == record.folder && i != this.dbRowCount)
+        {
+          var folderIndex = this.matchedIndices[i];
+          this.debug && this.console.logStringMessage("Archive This: Moving item " + i +
+            " ("+this.longFolderNames[folderIndex]+") to " + this.dbRowCount);
 
-        list.removeItemAt(i);
-        list.insertItemAt(this.dbRowCount,
-                          this.longFolderNames[folderIndex],
-                          folderIndex);
+          list.removeItemAt(i);
+          list.insertItemAt(this.dbRowCount,
+                            this.longFolderNames[folderIndex],
+                            folderIndex);
 
-        this.matchedIndices.splice(i,1);
-        this.matchedIndices.splice(this.dbRowCount,0,folderIndex);
+          this.matchedIndices.splice(i,1);
+          this.matchedIndices.splice(this.dbRowCount,0,folderIndex);
 
+        }
       }
+      this.moved[record.folder] = true;
     }
 
     this.setCandidate(this.matchedIndices[0]);
@@ -603,11 +613,25 @@ var ArchiveThisMoveCopy =
 
       }
 
+      // Remove any duplicates that snuck in
+      for (i = 0; i < this.dbResults.length; i++)
+      {
+        for (var j = i + 1; j < this.dbResults.length; j++)
+        {
+          if (this.dbResults[i].folder === this.dbResults[j].folder)
+          {
+            this.debug && this.console.logStringMessage("Archive This: removing duplicate folder from fragment set: " + this.dbResults[i].folder);
+            this.dbResults.splice(j,1);
+          }
+        }
+      }
+
       // Trim off priorities that are too high
       if (this.dbResults.length > this.dbMaxPriority)
       {
         this.dbResults.length = this.dbMaxPriority;
       }
+
 
       // Renumber priorities
       // (it's easier to reorder records and then renumber the priorities
