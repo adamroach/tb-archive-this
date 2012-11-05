@@ -110,6 +110,7 @@ var ArchiveThisFilter =
         this.setHeaderName(candidates[i]);
         document.getElementById('archive-this-header-value').
           setAttribute("value",this.trimToAngleBrackets(val));
+        this.guessFolder();
         return;
       }
     }
@@ -117,7 +118,74 @@ var ArchiveThisFilter =
     // If we haven't found a match yet, we punt and use "From" as
     // our best guess.
     this.setHeaderName("From");
-    document.getElementById('archive-this-header-value').setAttribute("value",this.trimToAngleBrackets(this.header.mime2DecodedAuthor));
+    document.getElementById('archive-this-header-value').
+      setAttribute("value",
+                   this.trimToAngleBrackets(this.header.mime2DecodedAuthor));
+    this.guessFolder();
+  },
+
+  guessFolder: function()
+  {
+    var matchString = document.getElementById('archive-this-header-value').
+                        getAttribute("value");
+    var guess;
+
+    var re = new RegExp("^<?([^\@]*)\@.*$");
+    if (re.test(matchString))
+    {
+      guess = matchString.replace(re, "$1");
+    }
+
+    if (!guess)
+    {
+      re = new RegExp("^<?([^\.]*)\..*$");
+      if (re.test(matchString))
+      {
+        guess = matchString.replace(re, "$1");
+      }
+    }
+
+    if (!guess)
+    {
+      return;
+    }
+
+    guess = guess.replace(/[^a-zA-Z0-9]/,".");
+
+    re = new RegExp("\/"+guess+"$","i");
+
+    var accountManager = 
+      Components.classes["@mozilla.org/messenger/account-manager;1"].
+        getService(Components.interfaces.nsIMsgAccountManager);
+    var servers = accountManager.allServers;
+    var numServers = servers.Count();
+
+    for (var i = 0; i <numServers; i++)
+    {
+      var rootFolder = servers.GetElementAt(i).
+        QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
+
+      if (rootFolder)
+      {
+        var allFolders = Components.classes ["@mozilla.org/supports-array;1"].
+          createInstance (Components.interfaces.nsISupportsArray);
+        rootFolder.ListDescendents (allFolders);
+        var numFolders = allFolders.Count ();
+        for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
+        {
+          var cf = allFolders.GetElementAt(folderIndex).
+            QueryInterface(Components.interfaces.nsIMsgFolder);
+
+          if (re.test(cf.URI))
+          {
+            // We found a plausible folder match. Set the picker.
+            this.SetPickerElement("filterFolder",cf.URI);
+            return;
+          }
+        }
+      }
+    }
+
   },
 
   // In most cases, if there is something in angle brackets,
@@ -171,6 +239,8 @@ var ArchiveThisFilter =
     {
       document.getElementById('archive-this-header-value').setAttribute("value",this.trimToAngleBrackets(headerValue));
     }
+
+    this.guessFolder();
   },
 
   onAccept: function()
