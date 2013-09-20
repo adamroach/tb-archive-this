@@ -31,12 +31,12 @@ var ArchiveThisMoveCopy =
   sortFolders : function sortFolders (a, b)
   {
     // Prefer folders in the same account as the selected message
-    if (   (a.server.prettyName == ArchiveThisMoveCopy.currAccount) 
-        && (b.server.prettyName != ArchiveThisMoveCopy.currAccount)) 
+    if (   (a.server.prettyName == ArchiveThisMoveCopy.currAccount)
+        && (b.server.prettyName != ArchiveThisMoveCopy.currAccount))
         { return -1; }
 
-    if (   (a.server.prettyName != ArchiveThisMoveCopy.currAccount) 
-        && (b.server.prettyName == ArchiveThisMoveCopy.currAccount)) 
+    if (   (a.server.prettyName != ArchiveThisMoveCopy.currAccount)
+        && (b.server.prettyName == ArchiveThisMoveCopy.currAccount))
         { return 1; }
 
     if (a.URI < b.URI) { return -1; }
@@ -62,12 +62,12 @@ var ArchiveThisMoveCopy =
     {
       if (this.debug)
       {
-        this.console.logStringMessage("Archive This: opening database");
+        this.console.logStringMessage("Archive This: opening folder history database");
       }
 
       Components.utils.import("resource://gre/modules/Services.jsm");
       Components.utils.import("resource://gre/modules/FileUtils.jsm");
-       
+
       var file = FileUtils.getFile("ProfD", ["archive_this.sqlite"]);
       this.dbConn = Services.storage.openDatabase(file);
 
@@ -150,10 +150,24 @@ var ArchiveThisMoveCopy =
 
     //////////////////////////////////////////////////////////////////////
     // Gather all the folders into an array
+    var accountManager;
+    var servers;
+    var numServers;
+    try {
+      accountManager = Components.classes ["@mozilla.org/messenger/account-manager;1"].getService(Components.interfaces.nsIMsgAccountManager);
+      servers = accountManager.allServers;
+      numServers = servers.length;
+    } catch (e) {
+      if (this.debug)
+      {
+        this.console.logStringMessage("Archive This: Error opening account manager: " + e);
+        return;
+      }
+    }
 
-    var accountManager = Components.classes ["@mozilla.org/messenger/account-manager;1"].getService(Components.interfaces.nsIMsgAccountManager);
-    var servers = accountManager.allServers;
-    var numServers = servers.Count();
+    if (this.debug) {
+      this.console.logStringMessage("Archive This: Found " + numServers + " servers to select from");
+    }
 
     //////////////////////////////////////////////////////////////////////
     // If we're changing folders (instead of moving or copying), then
@@ -162,23 +176,32 @@ var ArchiveThisMoveCopy =
     var unifiedFolders = new Array();
     if (this.mode == 'go' ) { try {
       var smartServer = accountManager.FindServer("nobody", "smart mailboxes", "none");
+      var rootFolder;
       if (smartServer)
       {
-        var rootFolder = smartServer.QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
+        rootFolder = smartServer.QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
       }
 
       if (rootFolder)
       {
-        var allFolders = Components.classes ["@mozilla.org/supports-array;1"].createInstance (Components.interfaces.nsISupportsArray);
-        rootFolder.ListDescendents (allFolders);
-        var numFolders = allFolders.Count ();
+        var allFolders = rootFolder.descendants;
+        var numFolders = allFolders.length;
         for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
         {
-          var cf = allFolders.GetElementAt(folderIndex).QueryInterface(Components.interfaces.nsIMsgFolder);
+          var cf = allFolders.queryElementAt(folderIndex, Components.interfaces.nsIMsgFolder, null);
           unifiedFolders.push(cf);
         }
       }
-    } catch (ex) {}}
+    } catch (ex) {
+      if (this.debug) {
+        this.console.logStringMessage("Archive This: Exception processing unified folders: " + ex);
+      }
+    }}
+
+    if (this.debug) {
+      this.console.logStringMessage("Archive This: Found " + unifiedFolders.length + " unified folders");
+    }
+
     unifiedFolders.sort(this.sortFolders);
 
     //////////////////////////////////////////////////////////////////////
@@ -186,26 +209,29 @@ var ArchiveThisMoveCopy =
     // servers and add each of their folders to the list.
     for (var i = 0; i <numServers; i++)
     {
-      var rootFolder = servers.GetElementAt(i).QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
+      var rootFolder = servers.queryElementAt(i,Components.interfaces.nsIMsgIncomingServer,null).rootFolder;
 
       if (rootFolder)
       {
-        var allFolders = Components.classes ["@mozilla.org/supports-array;1"].createInstance (Components.interfaces.nsISupportsArray);
-        rootFolder.ListDescendents (allFolders);
-        var numFolders = allFolders.Count ();
+        var allFolders = rootFolder.descendants;
+        var numFolders = allFolders.length;
         for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
         {
-          var cf = allFolders.GetElementAt(folderIndex).QueryInterface(Components.interfaces.nsIMsgFolder);
+          var cf = allFolders.queryElementAt(folderIndex,Components.interfaces.nsIMsgFolder,null);
           // TODO - if this.mode is not 'go', exclude folders we can't
           // file into
           this.folders.push(cf);
         }
       }
-   
+
     }
 
     this.folders.sort(this.sortFolders);
     this.folders = unifiedFolders.concat(this.folders);
+
+    if (this.debug) {
+      this.console.logStringMessage("Archive This: Found " + this.folders.length + " total folders");
+    }
 
     //////////////////////////////////////////////////////////////////////
     // Make full, long names for each folder
@@ -321,14 +347,14 @@ var ArchiveThisMoveCopy =
         if (row)
         {
           var folder = row.getResultByName("folder");
-          for (var i in ArchiveThisMoveCopy.folders) 
-          { 
-            if (ArchiveThisMoveCopy.folders[i].URI == folder) 
-            { 
-              ArchiveThisMoveCopy.debug && 
+          for (var i in ArchiveThisMoveCopy.folders)
+          {
+            if (ArchiveThisMoveCopy.folders[i].URI == folder)
+            {
+              ArchiveThisMoveCopy.debug &&
                 ArchiveThisMoveCopy.console.logStringMessage(
                   "Archive This: Setting initial value to " + folder);
-              ArchiveThisMoveCopy.setCandidate(i); 
+              ArchiveThisMoveCopy.setCandidate(i);
               return;
             }
           }
@@ -342,7 +368,7 @@ var ArchiveThisMoveCopy =
   handleRow : function handleRow  (row)
   {
     var f = this.fragment?this.fragment:document.getElementById("archive-this-search").value;
-    var record = 
+    var record =
     {
       fragment : row.getResultByName("fragment"),
       fraglen : row.getResultByName("fraglen"),
@@ -672,7 +698,7 @@ var ArchiveThisMoveCopy =
   {
     var candidate = document.getElementById('archive-this-candidate');
     this.archiveThis.selectedFolder = candidate.tooltipText;
-    this.debug && this.console.logStringMessage("Archive This: Selected folder = " 
+    this.debug && this.console.logStringMessage("Archive This: Selected folder = "
       + candidate.tooltipText);
 
     // Store the fragment-to-folder binding in the database
