@@ -71,6 +71,15 @@ FolderAutoCompleteResult.prototype = {
   },
 
   /**
+   * Get the final value that should be completed when the user confirms
+   * the match at the given index.
+   * @return {string} the final value of the result at the given index
+   */
+  getFinalCompleteValueAt: function(index) {
+    return this.getValueAt(index);
+  },
+
+  /**
    * Get the comment of the result at the given index
    */
   getCommentAt: function(index) {
