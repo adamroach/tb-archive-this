@@ -19,7 +19,7 @@ moveToFolderByUri: function(uri)
     if (this.debug)
     {
         var messageUriArray = gFolderDisplay.selectedMessageUris;
-        this.console.logStringMessage("Archive This: Moving [" 
+        this.console.logStringMessage("Archive This: Moving ["
              + messageUriArray.join(', ') + "] to " + uri);
     }
 
@@ -39,7 +39,7 @@ moveToFolderByUri: function(uri)
     }
     if (this.debug)
     {
-        this.console.logStringMessage("Archive This: Moving [" 
+        this.console.logStringMessage("Archive This: Moving ["
              + messageUriArray.join(', ') + "] to " + uri);
     }
     MsgMoveMessage(uri);
@@ -120,7 +120,14 @@ loadPrefs: function()
 
 findFolderUri: function (messageUri, header){
     var mimeHeader;
-    mimeHeader = mdn_extended_createHeadersFromURI(messageUri);
+    try {
+      mimeHeader = mdn_extended_createHeadersFromURI(messageUri);
+    } catch (e) {
+      if (this.debug) {
+        this.console.logStringMessage("Header too long for " + messageUri);
+      }
+      return "";
+    }
 
 //    alert(header.mime2DecodedAuthor + "\n" + mimeHeader.extractHeader("Message-ID",false) + "\n" + messageUri + "\n" + header.folder.URI);
 
@@ -241,7 +248,7 @@ filter: function(createIfNotFound)
 // This is the function for 3.0b3, which changed the folder interface
 // fairly radically. It is *much* cleaner, and works better than the
 // older interface.
-newFilter: function (createIfNotFound) 
+newFilter: function (createIfNotFound)
 {
   if (!this.prefs) { this.loadPrefs(); }
 
@@ -296,7 +303,7 @@ newFilter: function (createIfNotFound)
 },
 
 // This is the function for 2.0 through 3.0b2
-oldFilter: function (createIfNotFound) 
+oldFilter: function (createIfNotFound)
 {
   if (!this.prefs) { this.loadPrefs(); }
 
@@ -414,10 +421,10 @@ init : function ()
                           .getService(Components.interfaces.nsIXULAppInfo);
   var versionChecker = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
                                  .getService(Components.interfaces.nsIVersionComparator);
-  this.newFolderStyle = (versionChecker.compare(appInfo.version, "3.0b3") >= 0) 
+  this.newFolderStyle = (versionChecker.compare(appInfo.version, "3.0b3") >= 0)
 
   if (!this.prefs) { this.loadPrefs(); }
-  
+
   this.bindKeys();
 },
 
@@ -473,12 +480,12 @@ bindKeys : function()
       switch (i)
       {
         case 10:
-          // Deprecated, but alternate methods do not work. Will fix when 
+          // Deprecated, but alternate methods do not work. Will fix when
           // a preferred and functional alternative exists.
           key.setAttribute('oncommand',"ArchiveThis['moveToFolder']()");
           break;
         case 11:
-          // Deprecated, but alternate methods do not work. Will fix when 
+          // Deprecated, but alternate methods do not work. Will fix when
           // a preferred and functional alternative exists.
           key.setAttribute('oncommand',"ArchiveThis['copyToFolder']()");
           break;
@@ -507,8 +514,8 @@ bindKeys : function()
 
     if (this.debug)
     {
-      this.console.logStringMessage("Archive This: Binding " + 
-        ArchiveThisKeyUtils.normalize(keys[i*2],keycode) + " to " + 
+      this.console.logStringMessage("Archive This: Binding " +
+        ArchiveThisKeyUtils.normalize(keys[i*2],keycode) + " to " +
         key.getAttribute('oncommand'));
     }
 
@@ -625,7 +632,7 @@ openPrefs : function()
  * ***** END LICENSE BLOCK ***** */
 
 
-function mdn_extended_createHeadersFromURI(messageURI) {  
+function mdn_extended_createHeadersFromURI(messageURI) {
     var messageService = messenger.messageServiceFromURI(messageURI);
     var messageStream = Components.classes["@mozilla.org/network/sync-stream-listener;1"].createInstance().QueryInterface(Components.interfaces.nsIInputStream);
     var inputStream = Components.classes["@mozilla.org/scriptableinputstream;1"].createInstance().QueryInterface(Components.interfaces.nsIScriptableInputStream);

@@ -1,5 +1,7 @@
 "use strict";
 
+Components.utils.import("resource://gre/modules/Services.jsm");
+
 var ArchiveThisKeyUtils = {
 
 messengerWindow : null,
@@ -31,9 +33,13 @@ init : function()
 
   //////////////////////////////////////////////////////////////////////
   // Figure out our accel key
-  switch (Components.classes["@mozilla.org/preferences-service;1"]
-          .getService(Components.interfaces.nsIPrefService)
-          .getIntPref("ui.key.accelKey"))
+  var accelKey = 0;
+  try {
+    accelKey = Services.prefs.getIntPref("ui.key.accelKey");
+  } catch (e) {
+    this.console.logStringMessage(e.message);
+  }
+  switch(accelKey)
   {
     case 17: this.accel = "control"; break;
     case 18: this.accel = "alt"; break;

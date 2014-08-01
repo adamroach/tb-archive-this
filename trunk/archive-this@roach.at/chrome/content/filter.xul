@@ -8,7 +8,11 @@
 ]>
 
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<?xul-overlay href="chrome://archive-this/content/archiveFolderPickerOverlay.xul"?>
+
+<?xml-stylesheet href="chrome://messenger/skin/searchDialog.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/folderPane.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/folderMenus.css" type="text/css"?>
+
 
 <dialog
     id="archive-this-filter"
@@ -67,6 +71,7 @@
             <menuitem label="X-List"/>
             <menuitem label="X-List-Name"/>
             <menuitem label="X-MailingList"/>
+            <menuitem label="X-ReviewGroup"/>
             <menuitem label="Resent-From"/>
             <menuitem label="Resent-To"/>
             <menuitem label="Return-Path"/>
@@ -89,7 +94,13 @@
     </row>
     <row>
       <vbox pack="center"><label value="&filter_move_to_folder;"/></vbox>
-      <menulist id="filterFolder" flex="1"/>
+        <menulist id="filterFolder" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisFilter.onFolderPicked(event.target,'filterFolder')"/>
+        </menulist>
     </row>
   </rows>
 </grid>
