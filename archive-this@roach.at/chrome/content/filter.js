@@ -1,48 +1,34 @@
 "use strict";
 
+Components.utils.import("resource:///modules/MailUtils.js");
+Components.utils.import("resource://gre/modules/Services.jsm");
+
 var ArchiveThisFilter =
 {
   header: null,
   mimeHeader: null,
   s : null,
+  console: Components.classes["@mozilla.org/consoleservice;1"].
+             getService(Components.interfaces.nsIConsoleService),
 
   SetPickerElement : function(pickerID,uri)
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
-
     var picker = document.getElementById(pickerID);
     if (!picker)
       return;
-  
+
     if (uri)
     {
-      var msgfolder = GetMsgFolderFromUri(uri, true);
+      var msgfolder = MailUtils.getFolderForURI(uri, true);
       if (msgfolder && msgfolder.canFileMessages)
       {
-        var label = msgfolder.name;
-
-        var p = msgfolder.parent;
-        while (p && p.parent)
-        {
-          label = p.name+'/'+label;
-          p = p.parent;
-        }
-
-        if (msgfolder.server.prettyName)
-        {
-          //label = label + " on " + msgfolder.server.prettyName;
-          label = this.s.getFormattedString("prettyNameString",
-                                      [label, msgfolder.server.prettyName]);
-
-        }
-  
-        picker.setAttribute("label",label);
-        picker.setAttribute("tooltiptext", label);
+        picker.menupopup.selectFolder(msgfolder);
         picker.setAttribute("uri",uri);
         return;
       }
     }
-  
+
     picker.setAttribute("uri",null);
     picker.setAttribute("label","-");
   },
@@ -50,7 +36,6 @@ var ArchiveThisFilter =
   onFolderPicked : function(selection, pickerID)
   {
     var selectedUri = selection.getAttribute('id');
-
     // For some reason, the folder picker returns multiple
     // events when you use "select this folder"
     if (selectedUri.length == 0) { return; }
@@ -73,7 +58,7 @@ var ArchiveThisFilter =
     {
       if (selections[i].getAttribute("label") == headerName)
       {
-        menu.selectedIndex = i; 
+        menu.selectedIndex = i;
         return;
       }
     }
@@ -100,7 +85,7 @@ var ArchiveThisFilter =
   {
     var candidates = [ "List-Id", "MailingList", "Mailing-List",
                        "X-ML-Name", "X-List", "X-List-Name",
-                       "X-MailingList"];
+                       "X-MailingList", "X-ReviewGroup"];
     var val;
     for (var i in candidates)
     {
@@ -130,51 +115,52 @@ var ArchiveThisFilter =
                         getAttribute("value");
     var guess;
 
-    var re = new RegExp("^<?([^\@]*)\@.*$");
+    // For "resource@authority" strings, look for the resource (only)
+    var re = new RegExp("^<?([^\\@]*)\\@.*$");
     if (re.test(matchString))
     {
       guess = matchString.replace(re, "$1");
     }
 
+    // For "listname.authority" strings, look for the resource (only)
     if (!guess)
     {
-      re = new RegExp("^<?([^\.]*)\..*$");
+      re = new RegExp("^<?([^\\.]*)\\..*$");
       if (re.test(matchString))
       {
         guess = matchString.replace(re, "$1");
       }
     }
 
+    // Finally, if nothing else seems to match, just use the string itself
     if (!guess)
     {
-      return;
+      guess = matchString;
     }
 
     guess = guess.replace(/[^a-zA-Z0-9]/,".");
 
+
     re = new RegExp("\/"+guess+"$","i");
 
-    var accountManager = 
+    var accountManager =
       Components.classes["@mozilla.org/messenger/account-manager;1"].
         getService(Components.interfaces.nsIMsgAccountManager);
     var servers = accountManager.allServers;
-    var numServers = servers.Count();
+    var numServers = servers.length;
+
 
     for (var i = 0; i <numServers; i++)
     {
-      var rootFolder = servers.GetElementAt(i).
-        QueryInterface(Components.interfaces.nsIMsgIncomingServer).rootFolder;
+      var rootFolder = servers.queryElementAt(i,Components.interfaces.nsIMsgIncomingServer,null).rootFolder;
 
       if (rootFolder)
       {
-        var allFolders = Components.classes ["@mozilla.org/supports-array;1"].
-          createInstance (Components.interfaces.nsISupportsArray);
-        rootFolder.ListDescendents (allFolders);
-        var numFolders = allFolders.Count ();
+        var allFolders = rootFolder.descendants;
+        var numFolders = allFolders.length;
         for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
         {
-          var cf = allFolders.GetElementAt(folderIndex).
-            QueryInterface(Components.interfaces.nsIMsgFolder);
+          var cf = allFolders.queryElementAt(folderIndex,Components.interfaces.nsIMsgFolder,null);
 
           if (re.test(cf.URI))
           {
@@ -185,6 +171,7 @@ var ArchiveThisFilter =
         }
       }
     }
+
 
   },
 
@@ -257,7 +244,7 @@ var ArchiveThisFilter =
       return false;
     }
 
-    var msgfolder = GetMsgFolderFromUri(folder, true);
+    var msgfolder = MailUtils.getFolderForURI(folder, true);
     if (!msgfolder)
     {
       window.alert(this.s.getString("pleaseSelectFolderString"));

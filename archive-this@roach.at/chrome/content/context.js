@@ -49,7 +49,7 @@ var ArchiveThisContext =
     var msgfolder;
     try
     {
-      msgfolder = GetMsgFolderFromUri(folderUri, true);
+      msgfolder = MailUtils.getFolderForURI(folderUri, true);
     }
     catch (err)
     {

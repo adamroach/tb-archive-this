@@ -1,5 +1,7 @@
 "use strict";
 
+Components.utils.import("resource://gre/modules/Services.jsm");
+
 var ArchiveThisPrefs = {
 
 prefs: null,
@@ -17,8 +19,8 @@ console: Components.classes["@mozilla.org/consoleservice;1"].
            getService(Components.interfaces.nsIConsoleService),
 s: null,
 ms: null,
-keyNames : 
-[ 
+keyNames :
+[
   "archive-this-preset-key-0",
   "archive-this-preset-key-1",
   "archive-this-preset-key-2",
@@ -42,7 +44,7 @@ defaultKeys :
 },
 
 modifierNames :
-[ 
+[
   "archive-this-preset-modifier-0",
   "archive-this-preset-modifier-1",
   "archive-this-preset-modifier-2",
@@ -73,7 +75,7 @@ setPickerElement : function(pickerID,uri)
   {
     if (this.ms == null) { this.ms = document.getElementById("bundle_messenger"); }
     var specialName = uri.substr(8);
-    var label = this.ms.getString(specialName.toLowerCase()+"FolderName");
+    var label = this.ms ? this.ms.getString(specialName.toLowerCase()+"FolderName") : specialName;
     picker.setAttribute("label", label);
     picker.setAttribute("uri",uri);
     picker.setAttribute("tooltiptext", label);
@@ -82,29 +84,11 @@ setPickerElement : function(pickerID,uri)
 
   if (uri)
   {
-    var msgfolder = GetMsgFolderFromUri(uri, true);
+    var msgfolder = MailUtils.getFolderForURI(uri, true);
     if (msgfolder && msgfolder.canFileMessages)
     {
-      var label = msgfolder.name;
-
-      var p = msgfolder.parent;
-      while (p && p.parent)
-      {
-        label = p.name+'/'+label;
-        p = p.parent;
-      }
-
-      if (msgfolder.server.prettyName)
-      {
-        //label = label + " on " + msgfolder.server.prettyName;
-        if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
-        label = this.s.getFormattedString("prettyNameString",
-                     [label, msgfolder.server.prettyName]);
-      }
-
-      picker.setAttribute("label",label);
+      picker.menupopup.selectFolder(msgfolder);
       picker.setAttribute("uri",uri);
-      picker.setAttribute("tooltiptext", label);
       return;
     }
   }
@@ -121,19 +105,23 @@ initPicker : function(pickerID)
     return;
 
   var folders = ['Inbox', 'Trash', 'Sent', 'Drafts', 'Templates'];
-
   var menupopup = picker.menupopup;
+  if (!menupopup)
+    return;
 
   menupopup.appendChild(document.createElement('menuseparator'));
 
   for (var i in folders)
   {
+    var label = folders[i];
+    if (this.ms) {
+      label = this.ms.getString(folders[i].toLowerCase()+"FolderName");
+    }
     var menuitem = document.createElement('menuitem');
     menuitem.setAttribute("class","folderMenuItem");
     menuitem.setAttribute("SpecialFolder",folders[i]);
     menuitem.setAttribute("id","special:"+folders[i]);
-    menuitem.setAttribute("label", 
-                          this.ms.getString(folders[i].toLowerCase()+"FolderName"));
+    menuitem.setAttribute("label", label);
     menuitem.oncommand = function () { ArchiveThisPrefs.onFolderPicked(event.target,pickerID); };
     menupopup.appendChild(menuitem);
   }
@@ -142,8 +130,8 @@ initPicker : function(pickerID)
 initKeyValues : function()
 {
   var pf = navigator.platform.toLowerCase();
-  if (pf.indexOf("win") != -1) { var os = "win"; } 
-  else if (pf.indexOf("mac") != -1) { var os = "mac"; } 
+  if (pf.indexOf("win") != -1) { var os = "win"; }
+  else if (pf.indexOf("mac") != -1) { var os = "mac"; }
   else { var os = "other" }
 
   this.keys = this.prefs.getCharPref("keys").split("|");
@@ -228,7 +216,7 @@ initKeyValues : function()
 
     if (!(this.keys[i*2+1]) || (this.keys[i*2+1].length == 0))
     {
-      this.keys[i*2] = defaultKey; 
+      this.keys[i*2] = defaultKey;
     }
 
     var items = menu.getElementsByTagName("*");
@@ -378,7 +366,7 @@ initKeyValues : function()
 
     if (!(this.keys[i*2+1]) || (this.keys[i*2+1].length == 0))
     {
-      this.keys[(i*2)+1] = defaultKey; 
+      this.keys[(i*2)+1] = defaultKey;
     }
 
     items = menu.getElementsByTagName("*");
@@ -446,12 +434,11 @@ onLoad : function()
     });
   }
 
+
   //////////////////////////////////////////////////////////////////////
   // Read the preferences
 
-  this.prefs = Components.classes["@mozilla.org/preferences-service;1"]
-                            .getService(Components.interfaces.nsIPrefService)
-                            .getBranch("archive-this.");
+  this.prefs = Services.prefs.getBranch("archive-this.");
   this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
   this.prefs.addObserver("", this, false);
 
@@ -468,8 +455,7 @@ onLoad : function()
   this.keySymbols["alt"] = platformKeys.getString("VK_ALT");
   this.keySymbols["control"] = platformKeys.getString("VK_CONTROL");
   this.keySymbols["sep"] = platformKeys.getString("MODIFIER_SEPARATOR");
-  switch (Components.classes["@mozilla.org/preferences-service;1"]
-          .getService(Components.interfaces.nsIPrefService).getIntPref("ui.key.accelKey"))
+  switch (Services.prefs.getIntPref("ui.key.accelKey"))
   {
     case 17: this.accel = "control"; break;
     case 18: this.accel = "alt"; break;
@@ -481,13 +467,13 @@ onLoad : function()
   if (this.debug)
   {
     this.console.logStringMessage("Archive This: Opening prefs with language = " + this.language);
-    
-    this.console.logStringMessage("Archive This: Keysymbols: shift = " 
-      + this.keySymbols["shift"] 
-      + "; meta = " + this.keySymbols["meta"] 
-      + "; alt = " + this.keySymbols["alt"] 
-      + "; control = " + this.keySymbols["control"] 
-      + "; accel = " + this.keySymbols["accel"] 
+
+    this.console.logStringMessage("Archive This: Keysymbols: shift = "
+      + this.keySymbols["shift"]
+      + "; meta = " + this.keySymbols["meta"]
+      + "; alt = " + this.keySymbols["alt"]
+      + "; control = " + this.keySymbols["control"]
+      + "; accel = " + this.keySymbols["accel"]
       + "; sep = " + this.keySymbols["sep"]);
   }
   //////////////////////////////////////////////////////////////////////
@@ -521,7 +507,7 @@ onLoad : function()
     var found = false;
     if (this.debug)
      {
-       this.console.logStringMessage("Archive This: Finding entry for language: " 
+       this.console.logStringMessage("Archive This: Finding entry for language: "
          + baseLanguage[0] + " / " + this.language);
      }
 
@@ -546,7 +532,6 @@ onLoad : function()
        this.console.logStringMessage("Archive This: Translation submission disabled in this version");
      }
   }
-
 },
 
 onAccept : function()
@@ -604,7 +589,6 @@ onFolderPicked : function (selection,pickerID)
     if (selectedUri.length == 0) { return; }
   }
 
-
   var ordinal = pickerID.substr(-1,1) - 1;
   this.preset[ordinal] = selectedUri;
   this.setPickerElement(pickerID,selectedUri);
@@ -637,7 +621,7 @@ validateKeyBindings : function ()
       if (this.overrideKeys)
       {
         image.setAttribute("src","info.png");
-        label.setAttribute('value', 
+        label.setAttribute('value',
           this.s.getFormattedString("overrideString", [conflict]));
         modifier.removeAttribute("style");
         key.removeAttribute("style");
@@ -645,7 +629,7 @@ validateKeyBindings : function ()
       else
       {
         image.setAttribute("class","alert-icon");
-        label.setAttribute('value', 
+        label.setAttribute('value',
           this.s.getFormattedString("conflictString", [conflict]));
 
         label.setAttribute('style', "color:red");
@@ -710,7 +694,7 @@ setOverrideKeysValue : function()
   this.overrideKeys = document.getElementById("archive-this-override-keys").checked;
   if (this.debug)
   {
-    this.console.logStringMessage("Archive This: key override " + 
+    this.console.logStringMessage("Archive This: key override " +
       (this.overrideKeys?'on':'off'));
   }
   this.setPresetLabels();
@@ -747,7 +731,7 @@ decorateRule : function (rule)
     return;
   }
 
-  var msgfolder = GetMsgFolderFromUri(val[3], true);
+  var msgfolder = MailUtils.getFolderForURI(val[3], true);
   var folderName;
   if (msgfolder)
   {
@@ -775,7 +759,7 @@ decorateRule : function (rule)
 //  var tooltip = "If " + val[0] + " " + this.compText[val[1]] + ' "' +
 //                val[2] + '", move to folder ' + folderName;
 
-  var tooltip = this.s.getFormattedString ("ruleString"+val[1], 
+  var tooltip = this.s.getFormattedString ("ruleString"+val[1],
                   [val[0], val[2], folderName]);
 
   rule.setAttribute('label', val[0] + ": " + val[2]);
@@ -806,7 +790,7 @@ changeCurrentRule : function (headerName,comparitor,headerValue,folder)
   // Modify current entry in list box
   var rule = document.getElementById('archive-this-filter-list').selectedItem;
   if (!rule) {return; }
-  rule.setAttribute('value', headerName + "|" + comparitor + "|" + 
+  rule.setAttribute('value', headerName + "|" + comparitor + "|" +
                              headerValue + "|" + folder) ;
   ArchiveThisPrefs.decorateRule(rule);
 },
@@ -953,17 +937,17 @@ submitTranslation : function ()
     var channel = ioService.newChannelFromURI(URI);
     var istream = channel.open();
 
-    var cstream = 
+    var cstream =
       Components.classes["@mozilla.org/intl/converter-input-stream;1"].
       createInstance(Components.interfaces.nsIConverterInputStream);
     cstream.init(istream, "UTF-8", 0, 0);
-    
+
     var str = {};
     cstream.readString(-1, str);
     data = str.value;
     cstream.close(); // this closes fstream
 
-    body = body + "\n\n+++ chrome/locale/" + l + "/" + files[i] + "\n\n" 
+    body = body + "\n\n+++ chrome/locale/" + l + "/" + files[i] + "\n\n"
                 + data;
 
    }
@@ -976,23 +960,23 @@ submitTranslation : function ()
     body = body.replace(/</g,'&lt;');
   }
 
-   var sURL="mailto:Archive%20This%20Support%20<tb-archive-this@nostrum.com>?subject=" 
-       + encodeURIComponent(subject) 
-       + "&body=" + encodeURIComponent(body); 
-   
-   var msgComposeService=  
-     Components.classes["@mozilla.org/messengercompose;1"]  
-     .getService(Components.interfaces.nsIMsgComposeService);  
-   
-   // make the URI  
-   var ioService =  
-     Components.classes["@mozilla.org/network/io-service;1"]  
-       .getService(Components.interfaces.nsIIOService);  
-   
-   var aURI = ioService.newURI(sURL, null, null);  
-   
-   // open new message  
-   msgComposeService.OpenComposeWindowWithURI (null, aURI); 
+   var sURL="mailto:Archive%20This%20Support%20<tb-archive-this@nostrum.com>?subject="
+       + encodeURIComponent(subject)
+       + "&body=" + encodeURIComponent(body);
+
+   var msgComposeService=
+     Components.classes["@mozilla.org/messengercompose;1"]
+     .getService(Components.interfaces.nsIMsgComposeService);
+
+   // make the URI
+   var ioService =
+     Components.classes["@mozilla.org/network/io-service;1"]
+       .getService(Components.interfaces.nsIIOService);
+
+   var aURI = ioService.newURI(sURL, null, null);
+
+   // open new message
+   msgComposeService.OpenComposeWindowWithURI (null, aURI);
 },
 
 fileBugReport : function ()
@@ -1012,9 +996,7 @@ fileBugReport : function ()
 
    var extNames = [];
 
-   var extPrefs = Components.classes["@mozilla.org/preferences-service;1"]
-                            .getService(Components.interfaces.nsIPrefService)
-                            .getBranch("extensions.");
+   var extPrefs = Services.prefs.getBranch("extensions.");
 
    var enabledIds = [];
 
@@ -1050,7 +1032,7 @@ fileBugReport : function ()
      }
      if (enabledIds.length > 0)
      {
-       extNames.push(ext.name + " " + ext.version + 
+       extNames.push(ext.name + " " + ext.version +
                      (enabledHash[ext.id]?" (enabled)":" (disabled)"));
      }
      else
@@ -1068,7 +1050,7 @@ fileBugReport : function ()
               "filters:  " + this.prefs.getCharPref("filters") + "\n\n"+
               "----------------------------------------------------------------------\n" +
               this.s.getString("bugEnvironmentString") +"\n\n"+
-              "appinfo:  " + 
+              "appinfo:  " +
                 //appInfo.vendor + " " +
                 appInfo.name + " " +
                 //appInfo.ID + " " +
@@ -1085,23 +1067,22 @@ fileBugReport : function ()
      body = body + "  " + i + ": " + ArchiveThisKeyUtils.functionName[i] + "\n";
    }
 
-   var sURL="mailto:Archive%20This%20Support%20<tb-archive-this@nostrum.com>?subject=" + 
-            encodeURIComponent(subject) + "&body=" + encodeURIComponent(body); 
-   
-   var msgComposeService=  
-     Components.classes["@mozilla.org/messengercompose;1"]  
-     .getService(Components.interfaces.nsIMsgComposeService);  
-   
-   // make the URI  
-   var ioService =  
-     Components.classes["@mozilla.org/network/io-service;1"]  
-       .getService(Components.interfaces.nsIIOService);  
-   
-   var aURI = ioService.newURI(sURL, null, null);  
-   
-   // open new message  
-   msgComposeService.OpenComposeWindowWithURI (null, aURI); 
+   var sURL="mailto:Archive%20This%20Support%20<tb-archive-this@nostrum.com>?subject=" +
+            encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+
+   var msgComposeService=
+     Components.classes["@mozilla.org/messengercompose;1"]
+     .getService(Components.interfaces.nsIMsgComposeService);
+
+   // make the URI
+   var ioService =
+     Components.classes["@mozilla.org/network/io-service;1"]
+       .getService(Components.interfaces.nsIIOService);
+
+   var aURI = ioService.newURI(sURL, null, null);
+
+   // open new message
+   msgComposeService.OpenComposeWindowWithURI (null, aURI);
 }
 
 }
-

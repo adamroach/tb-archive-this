@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
-<?xul-overlay href="chrome://archive-this/content/archiveFolderPickerOverlay.xul"?>
+<?xml-stylesheet href="chrome://messenger/skin/searchDialog.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/folderPane.css" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/skin/folderMenus.css" type="text/css"?>
 
 <!DOCTYPE window [
   <!ENTITY % commonDTD SYSTEM "chrome://archive-this/locale/common.dtd">
@@ -13,12 +15,12 @@
     id="archive-this-prefs"
     title="&prefs_title;"
     orient="vertical"
-    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
     buttons="accept,cancel"
     buttonlabelaccept="&save;"
     buttonlabelcancel="&cancel;"
-    onload="ArchiveThisPrefs.onLoad();"
     ondialogaccept="ArchiveThisPrefs.onAccept();"
+    xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    onload="ArchiveThisPrefs.onLoad();"
     >
 
   <stringbundleset id="stringbundleset">
@@ -92,55 +94,109 @@
       <rows>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-1" value="Ctrl-1"/></vbox>
-          <menulist id="archive-this-folder-1"/>
+          <menulist id="archive-this-folder-1" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-1');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-1');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-2" value="Ctrl-2"/></vbox>
-          <menulist id="archive-this-folder-2"/>
+          <menulist id="archive-this-folder-2" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-2');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-2');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-3" value="Ctrl-3"/></vbox>
-          <menulist id="archive-this-folder-3"/>
+          <menulist id="archive-this-folder-3" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-3');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-3');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-4" value="Ctrl-4"/></vbox>
-          <menulist id="archive-this-folder-4"/>
+          <menulist id="archive-this-folder-4" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-4');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-4');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-5" value="Ctrl-5"/></vbox>
-          <menulist id="archive-this-folder-5"/>
+          <menulist id="archive-this-folder-5" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-5');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-5');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-6" value="Ctrl-6"/></vbox>
-          <menulist id="archive-this-folder-6"/>
+          <menulist id="archive-this-folder-6" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-6');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-6');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-7" value="Ctrl-7"/></vbox>
-          <menulist id="archive-this-folder-7"/>
+          <menulist id="archive-this-folder-7" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-7');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-7');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-8" value="Ctrl-8"/></vbox>
-          <menulist id="archive-this-folder-8"/>
+          <menulist id="archive-this-folder-8" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-8');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-8');"/>
         </row>
         <row>
           <vbox pack="center"><label id="archive-this-preset-label-9" value="Ctrl-9"/></vbox>
-          <menulist id="archive-this-folder-9"/>
+          <menulist id="archive-this-folder-9" displayformat="verbose">
+          <menupopup class="menulist-menupopup"
+                     type="folder" mode="search"
+                     showAccountsFileHere="true"
+                     showFileHereLabel="true"
+                     oncommand="ArchiveThisPrefs.onFolderPicked(event.target,'archive-this-folder-9');"/>
+          </menulist>
           <toolbarbutton image="x.png" maxwidth="16"
              oncommand="ArchiveThisPrefs.onFolderPicked(null,'archive-this-folder-9');"/>
         </row>
