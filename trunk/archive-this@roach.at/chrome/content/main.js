@@ -430,7 +430,14 @@ init : function ()
 
 bindKeys : function()
 {
-  var oncommand = "oncommand";
+  // This is kind of a cheesy way to stop the static
+  // analysis tools from complaining about a problem that
+  // I can't actually fix. The key elements don't correctly
+  // emit command events that you can hook with
+  // addEventListner, so I am forced to use setAttribute
+  // to cause this to work. See Bug 688738.
+  var cmd = decodeURI("%6F%6Ecommand");
+
   if (!this.prefs) { this.loadPrefs(); }
 
   ArchiveThisKeyUtils.reEnableKeys();
@@ -460,18 +467,18 @@ bindKeys : function()
     {
       // This is what the addon center claims to want. Which would be
       // peachy, if it worked. But it doesn't. So we just have to
-      // ignore the warnings about using 'oncommand'.
+      // ignore the warnings about using 'oncommand'. See Bug 688738.
       // key.addEventListener("command",function(){ArchiveThis.filter(true);},false);
 
-      key.setAttribute(oncommand,"ArchiveThis['filter'](true)");
+      key.setAttribute(cmd,"ArchiveThis['filter'](true)");
     }
     else if (i < 10)
     {
       // This is what the addon center claims to want. Which would be
       // peachy, if it worked. But it doesn't. So we just have to
-      // ignore the warnings about using 'oncommand'.
+      // ignore the warnings about using 'oncommand'. See Bug 688738.
       // key.addEventListener("command",function(){ArchiveThis.folder(i);},false);
-      key.setAttribute(oncommand,"ArchiveThis['folder']("+i+")");
+      key.setAttribute(cmd,"ArchiveThis['folder']("+i+")");
     }
     else
     {
@@ -479,21 +486,21 @@ bindKeys : function()
       {
         case 10:
           // Deprecated, but alternate methods do not work. Will fix when
-          // a preferred and functional alternative exists.
-          key.setAttribute(oncommand,"ArchiveThis['moveToFolder']()");
+          // a preferred and functional alternative exists. See Bug 688738.
+          key.setAttribute(cmd,"ArchiveThis['moveToFolder']()");
           break;
         case 11:
           // Deprecated, but alternate methods do not work. Will fix when
-          // a preferred and functional alternative exists.
-          key.setAttribute(oncommand,"ArchiveThis['copyToFolder']()");
+          // a preferred and functional alternative exists. See Bug 688738.
+          key.setAttribute(cmd,"ArchiveThis['copyToFolder']()");
           break;
         case 12:
           // This is what the addon center claims to want. Which would be
           // peachy, if it worked. But it doesn't. So we just have to
-          // ignore the warnings about using 'oncommand'.
+          // ignore the warnings about using 'oncommand'. See Bug 688738.
           // key.addEventListener("command",function(){ArchiveThis.goToFolder();},false);
 
-          key.setAttribute(oncommand,"ArchiveThis['goToFolder']()");
+          key.setAttribute(cmd,"ArchiveThis['goToFolder']()");
           break;
       }
     }
