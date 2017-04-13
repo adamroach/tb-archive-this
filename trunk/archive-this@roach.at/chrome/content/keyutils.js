@@ -191,9 +191,16 @@ reEnableKeys : function()
                     getElementById("archive-this-disabled-keys");
   var keys = disabled.childNodes;
 
-  for (var i in keys)
-  {
-    keys[i].disabled=false;
+  /* This interface changed in Thunderbird 53 or thereabouts */
+  if ('forEach' in keys) {
+    keys.forEach((key) => {
+      key.disabled = false;
+    });
+  } else {
+    for (var i in keys)
+    {
+      keys[i].disabled=false;
+    }
   }
 
   // Detatch and re-attach to remove the cached values
