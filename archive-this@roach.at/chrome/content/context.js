@@ -20,7 +20,7 @@ var ArchiveThisContext =
     var prefs = Components.classes["@mozilla.org/preferences-service;1"]
                               .getService(Components.interfaces.nsIPrefService)
                               .getBranch("archive-this.");
-    prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+//    prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
 
     var preset = prefs.getCharPref("presets").split("|",9);
 

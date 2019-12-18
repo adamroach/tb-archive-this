@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/css" href="chrome://archive-this/content/button.css"?>
+<?xml-stylesheet href="chrome://messenger/content/bindings.css" type="text/css"?>
 
 <!DOCTYPE overlay >
 <overlay

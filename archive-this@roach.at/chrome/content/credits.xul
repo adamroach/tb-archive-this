@@ -6,8 +6,8 @@
   <!ENTITY % prefsDTD SYSTEM "chrome://archive-this/locale/prefs.dtd">
   %prefsDTD;
 ]>
-
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://messenger/content/bindings.css" type="text/css"?>
 
 <dialog
     id="archive-this-credits"

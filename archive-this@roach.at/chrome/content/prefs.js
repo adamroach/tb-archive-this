@@ -439,7 +439,7 @@ onLoad : function()
   // Read the preferences
 
   this.prefs = Services.prefs.getBranch("archive-this.");
-  this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+//  this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
   this.prefs.addObserver("", this, false);
 
   this.debug = this.prefs.getBoolPref("debug");

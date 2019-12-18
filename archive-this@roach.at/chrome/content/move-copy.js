@@ -52,7 +52,7 @@ var ArchiveThisMoveCopy =
     {
       this.prefs = Components.classes["@mozilla.org/preferences-service;1"].
         getService(Components.interfaces.nsIPrefService).getBranch("archive-this.");
-      this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
+//      this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
     }
 
     this.debug = this.prefs.getBoolPref("debug");
@@ -671,8 +671,7 @@ var ArchiveThisMoveCopy =
       var del = this.dbConn.createStatement("DELETE FROM stringmap WHERE fragment = :frag");
       del.params.frag = fragment;
       // Synchronous execution -- no results, so it will go quickly.
-      // This must complete before the inserts are fired off, and
-      // messing around with callbacks would be a pain.
+      // This must complete before the inserts are fired off.
       del.executeStep();
 
       // Insert new entries

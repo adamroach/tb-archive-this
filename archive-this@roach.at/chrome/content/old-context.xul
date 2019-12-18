@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!DOCTYPE overlay SYSTEM "chrome://archive-this/locale/context.dtd">
+<?xml-stylesheet href="chrome://messenger/content/bindings.css" type="text/css"?>
 <overlay
   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 

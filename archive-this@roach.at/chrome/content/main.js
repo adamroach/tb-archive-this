@@ -11,6 +11,7 @@ console: Components.classes["@mozilla.org/consoleservice;1"].
 debug: false,
 newFolderStyle: false,
 overrideKeys: false,
+maxHeaderSize: 8192,
 
 moveToFolderByUri: function(uri)
 {
@@ -89,6 +90,11 @@ loadFilters: function()
 {
   this.rules = new Array();
   var ruleText = this.prefs.getCharPref("filters").split("||");
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: rules: " +
+                                  ruleText.join());
+  }
   for (var i = 0; i < ruleText.length; i++)
   {
     var rule = archiveThisClone(ArchiveRule);
@@ -104,7 +110,6 @@ loadPrefs: function()
     this.prefs = Components.classes["@mozilla.org/preferences-service;1"]
                               .getService(Components.interfaces.nsIPrefService)
                               .getBranch("archive-this.");
-    this.prefs.QueryInterface(Components.interfaces.nsIPrefBranch2);
     this.prefs.addObserver("", this, false);
   }
 
@@ -115,6 +120,20 @@ loadPrefs: function()
   }
 
   this.preset = this.prefs.getCharPref("presets").split("|",9);
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: presets: " +
+                                  this.preset.join());
+  }
+
+  this.maxHeaderSize = this.prefs.getIntPref("max-header-size");
+
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: max-header-size: " +
+                                  this.maxHeaderSize);
+  }
+
   this.loadFilters();
 },
 
@@ -410,6 +429,13 @@ observe: function(subject, topic, data)
       {
         this.console.logStringMessage("Archive This: Debugging enabled.");
       }
+    case "max-header-size":
+      this.maxHeaderSize = this.prefs.getIntPref("max-header-size");
+      if (this.debug)
+      {
+        this.console.logStringMessage("Archive This: max-header-size: " +
+                                      this.maxHeaderSize);
+      }
   }
 },
 
@@ -662,7 +688,7 @@ function mdn_extended_createHeadersFromURI(messageURI) {
           message_content = message_content.substring(0, p2);
           break;
         }
-        if (message_content.length > 1024 * 8)
+        if (message_content.length > (ArchiveThis.maxHeaderSize || 8192))
         {
           throw "Could not find end-of-headers line.";
           return null;
