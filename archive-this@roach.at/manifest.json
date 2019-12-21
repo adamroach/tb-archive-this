@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+  "applications": {
+    "gecko": {
+      "id": "archive-this@roach.at",
+      "strict_min_version": "68.0"
+    }
+  },
+  "name": "Archive This",
+  "description": "Moves selected messages into appropriate archive folder",
+  "version": "2.0.0.0",
+  "author": "Adam Roach",
+  "icons": {
+    "32": "content/icon.png"
+  },
+  "legacy": {
+    "type": "xul",
+    "options": {
+      "page": "chrome://archive-this/content/tab-prefs.xul",
+      "open_in_tab": true
+    }
+  }
+}
