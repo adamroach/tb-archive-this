@@ -84,7 +84,7 @@ setPickerElement : function(pickerID,uri)
 
   if (uri)
   {
-    var msgfolder = MailUtils.getFolderForURI(uri, true);
+    var msgfolder = MailUtils.getExistingFolder(uri, true);
     if (msgfolder && msgfolder.canFileMessages)
     {
       picker.menupopup.selectFolder(msgfolder);
