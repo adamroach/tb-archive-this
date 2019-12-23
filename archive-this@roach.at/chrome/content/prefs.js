@@ -1,6 +1,6 @@
 "use strict";
 
-Components.utils.import("resource://gre/modules/Services.jsm");
+var { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
 
 var ArchiveThisPrefs = {
 
@@ -87,7 +87,8 @@ setPickerElement : function(pickerID,uri)
     var msgfolder = MailUtils.getExistingFolder(uri, true);
     if (msgfolder && msgfolder.canFileMessages)
     {
-      picker.menupopup.selectFolder(msgfolder);
+      // This is now not defined, and I have no idea where it went --jl
+      //picker.menupopup.selectFolder(msgfolder);
       picker.setAttribute("uri",uri);
       return;
     }
@@ -416,7 +417,7 @@ onLoad : function()
   }
   catch (err)
   {
-    Components.utils.import("resource://gre/modules/AddonManager.jsm");
+    var { AddonManager } = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
     AddonManager.getAddonByID(MY_ID,function(addon) {
       ArchiveThisPrefs.at_addon = addon;
 
@@ -498,7 +499,8 @@ onLoad : function()
       this.decorateRule(rule);
     }
   }
-  list.ensureIndexIsVisible(0);
+  // Apparently this isn't needed anymore --jl
+  //list.ensureIndexIsVisible(0);
 
   var languages = document.getElementById('archive-this-translate-language');
   if (languages)
