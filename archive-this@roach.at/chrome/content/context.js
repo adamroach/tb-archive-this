@@ -6,8 +6,8 @@ var ArchiveThisContext =
 
   initOverlay : function()
   {
-    this.s = document.getElementById("archive-this-string-bundle");
-    var menu = document.getElementById("archive-this-context-menu");
+    ArchiveThisContext.s = document.getElementById("archive-ArchiveThisContext-string-bundle");
+    var menu = document.getElementById("archive-ArchiveThisContext-context-menu");
     if (menu)
     {
       menu.addEventListener("popupshowing", ArchiveThisContext.setMenu, false);
@@ -16,23 +16,23 @@ var ArchiveThisContext =
 
   setMenu : function ()
   {
-    if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
+    if (ArchiveThisContext.s == null) { ArchiveThisContext.s = document.getElementById("archive-ArchiveThisContext-string-bundle"); }
     var prefs = Components.classes["@mozilla.org/preferences-service;1"]
                               .getService(Components.interfaces.nsIPrefService)
-                              .getBranch("archive-this.");
+                              .getBranch("archive-ArchiveThisContext.");
 //    prefs.QueryInterface(Components.interfaces.nsIPrefBranch);
 
     var preset = prefs.getCharPref("presets").split("|",9);
 
-    var menu = document.getElementById("archive-this-context-menu");
+    var menu = document.getElementById("archive-ArchiveThisContext-context-menu");
     for (var i = 1; i <= 9; i++)
     {
-      var item = document.getElementById("archive-this-move-preset-"+i);
+      var item = document.getElementById("archive-ArchiveThisContext-move-preset-"+i);
       var name = ArchiveThisContext.getPrettyName(preset[i-1]);
       if (name)
       {
         //item.label = "Move to " + name;
-        item.label = this.s.getFormattedString("moveToFolderString",[name]);
+        item.label = ArchiveThisContext.s.getFormattedString("moveToFolderString",[name]);
         item.hidden = false;
       }
       else
@@ -44,7 +44,7 @@ var ArchiveThisContext =
 
   getPrettyName : function(folderUri)
   {
-    if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
+    if (ArchiveThisContext.s == null) { ArchiveThisContext.s = document.getElementById("archive-ArchiveThisContext-string-bundle"); }
 
     var msgfolder;
     try
@@ -70,7 +70,7 @@ var ArchiveThisContext =
       if (msgfolder.server.prettyName)
       {
         //folderName = '"' + folderName + '" on ' + msgfolder.server.prettyName;
-        folderName = this.s.getFormattedString("prettyNameString",
+        folderName = ArchiveThisContext.s.getFormattedString("prettyNameString",
                      [folderName, msgfolder.server.prettyName]);
       }
     }
