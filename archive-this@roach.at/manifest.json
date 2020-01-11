@@ -8,7 +8,7 @@
   },
   "name": "Archive This",
   "description": "Moves selected messages into appropriate archive folder",
-  "version": "2.0.0.0",
+  "version": "1.5.0.0",
   "author": "Adam Roach",
   "icons": {
     "32": "content/icon.png"
@@ -16,8 +16,8 @@
   "legacy": {
     "type": "xul",
     "options": {
-      "page": "chrome://archive-this/content/tab-prefs.xul",
-      "open_in_tab": true
+      "page": "chrome://archive-this/content/prefs.xul",
+      "open_in_tab": false
     }
   }
 }
