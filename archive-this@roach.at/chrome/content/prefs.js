@@ -73,6 +73,8 @@ setPickerElement : function(pickerID,uri)
       "Setting picker " + pickerID + " to " + uri);
   }
 
+  if (!uri) uri = '';
+
   var picker = document.getElementById(pickerID);
   if (!picker) {
     ArchiveThisPrefs.console.logStringMessage("Archive This: " +
@@ -83,7 +85,7 @@ setPickerElement : function(pickerID,uri)
   let items = picker.children[2].children; // oh god what a hack
   let id = encodeURI(uri);
   for (let i = 0; i < items.length; i++) {
-    if (items[i].id == id) {
+    if (items[i].id == id || items[i].id == uri) {
       if (ArchiveThisPrefs.debug)
       {
         ArchiveThisPrefs.console.logStringMessage("Archive This: " +
@@ -472,6 +474,12 @@ onLoad : function()
 
   ArchiveThisKeyUtils.init();
 
+
+  //////////////////////////////////////////////////////////////////////
+  // Bind accept button
+  let dialog = document.getElementById("archive-this-prefs");
+  dialog.addEventListener("dialogaccept", ArchiveThisPrefs.onAccept.bind(this));
+
   //////////////////////////////////////////////////////////////////////
   // Collect plugin information
   var MY_ID = "archive-this@roach.at";
@@ -567,8 +575,10 @@ onLoad : function()
       this.decorateRule(rule);
     }
   }
-  // Apparently this isn't needed anymore --jl
-  //list.ensureIndexIsVisible(0);
+
+  let firstItem = list.getItemAtIndex(0);
+  list.selectItem(firstItem);
+  list.ensureElementIsVisible(firstItem);
 
   var languages = document.getElementById('archive-this-translate-language');
   if (languages)
@@ -606,6 +616,10 @@ onLoad : function()
 
 onAccept : function()
 {
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: Saving prefs");
+  }
   this.prefs.setCharPref("presets",this.preset.join('|'));
   this.prefs.setCharPref("keys",this.keys.join('|'));
   this.prefs.setBoolPref("debug",this.debug);
@@ -627,6 +641,10 @@ shutdown: function()
 
 observe: function(subject, topic, data)
 {
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: Pref observe: " + topic);
+  }
   if (topic != "nsPref:changed")
   {
     return;
@@ -893,7 +911,7 @@ deleteCurrentRule : function ()
     selectee = list.getItemAtIndex(selecteeIndex);
   }
 
-  list.removeItemAt(victimIndex);
+  list.getItemAtIndex(victimIndex).remove();
 
   if (selectee)
   {
@@ -905,15 +923,20 @@ copyCurrentRule : function ()
 {
   var list = document.getElementById('archive-this-filter-list');
   var rule = list.getItemAtIndex(list.currentIndex);
-  var clone;
+
+  let clone = document.createElement("richlistitem");
+  clone.value = rule.value;
+  let newLabel = document.createElement("label");
+  newLabel.value = rule.label;
+  clone.appendChild(newLabel);
 
   if (list.currentIndex < list.getRowCount() - 1)
   {
-    clone = list.insertItemAt(list.currentIndex+1,rule.label,rule.value);
+    clone = list.insertBefore(clone, rule);
   }
   else
   {
-    clone = list.appendItem(rule.label,rule.value);
+    clone = list.appendChild(clone);
   }
 
   this.decorateRule(clone);
@@ -941,11 +964,11 @@ moveRule : function(distance)
   var tempValue = swapItem.value;
   var tempTooltipText = swapItem.tooltipText;
 
-  swapItem.label = curItem.label;
+  swapItem.firstChild.setAttribute('value', curItem.label);
   swapItem.value = curItem.value;
   swapItem.tooltipText = curItem.tooltipText;
 
-  curItem.label = tempLabel;
+  curItem.firstChild.setAttribute('value', tempLabel);
   curItem.value = tempValue;
   curItem.tooltipText = tempTooltipText;
 
