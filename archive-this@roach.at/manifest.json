@@ -11,7 +11,7 @@
   "version": "1.5.0.0",
   "author": "Adam Roach",
   "icons": {
-    "32": "content/icon.png"
+    "54": "content/icon.png"
   },
   "legacy": {
     "type": "xul",
