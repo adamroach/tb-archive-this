@@ -48,6 +48,9 @@ var ArchiveThisMoveCopy =
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
 
+    document.addEventListener("dialogaccept",
+      ArchiveThisMoveCopy.onAccept.bind(this));
+
     if (!this.prefs)
     {
       this.prefs = Components.classes["@mozilla.org/preferences-service;1"].
@@ -237,7 +240,7 @@ var ArchiveThisMoveCopy =
     // Make full, long names for each folder
     for (var i in this.folders)
     {
-      var label = this.folders[i].prettiestName;
+      var label = this.folders[i].prettiestName || this.folders[i].prettyName;
       var p = this.folders[i].parent;
       while (p && p.parent)
       {
@@ -283,7 +286,13 @@ var ArchiveThisMoveCopy =
     {
       if (this.longFolderNames[i].toLowerCase().indexOf(searchText.toLowerCase()) > -1)
       {
-        list.appendItem(this.longFolderNames[i],i);
+        let newNode = document.createElement("richlistitem");
+        newNode.value = i;
+        let newLabel = document.createElement("label");
+        newLabel.value = this.longFolderNames[i];
+        newNode.appendChild(newLabel);
+        list.appendChild(newNode);
+        //list.appendItem(this.longFolderNames[i],i);
         this.matchedIndices.push(i);
 
         if (!bestFound)
@@ -401,10 +410,10 @@ var ArchiveThisMoveCopy =
           this.debug && this.console.logStringMessage("Archive This: Moving item " + i +
             " ("+this.longFolderNames[folderIndex]+") to " + this.dbRowCount);
 
-          list.removeItemAt(i);
-          list.insertItemAt(this.dbRowCount,
-                            this.longFolderNames[folderIndex],
-                            folderIndex);
+          let entry = list.getItemAtIndex(i);
+          entry.remove();
+          let refNode = list.getItemAtIndex(this.dbRowCount);
+          refNode.parentNode.insertBefore(entry, refNode);
 
           this.matchedIndices.splice(i,1);
           this.matchedIndices.splice(this.dbRowCount,0,folderIndex);

@@ -20,7 +20,6 @@
     buttonlabelcancel="&cancel;"
     onload="ArchiveThisMoveCopy.onLoad();"
     onunload="ArchiveThisMoveCopy.shutdown();"
-    ondialogaccept="ArchiveThisMoveCopy.onAccept();"
     >
 
   <stringbundleset id="stringbundleset">
@@ -35,8 +34,6 @@
           src="chrome://messenger/content/commandglue.js"/>
   <script type="application/x-javascript" 
           src="chrome://messenger/content/widgetglue.js"/>
-  <script type="application/x-javascript" 
-          src="chrome://messenger/content/virtualFolderProperties.js"/>
 
   <script type="application/x-javascript" 
           src="chrome://archive-this/content/move-copy.js"/>
@@ -95,7 +92,7 @@
        position="after_start"
        onpopupshowing="ArchiveThisMoveCopy.onFolderListShowing();"
        onpopupshown="ArchiveThisMoveCopy.onFolderListShown();">
-  <listbox id="archive-this-folder-list" flex="1"
+  <richlistbox id="archive-this-folder-list" flex="1"
            onselect="ArchiveThisMoveCopy.onFolderListSelect();" />
 </panel>
 

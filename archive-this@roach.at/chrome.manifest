@@ -93,6 +93,5 @@ style chrome://global/content/customizeToolbar.xul chrome://archive-this/content
 ###########################################################################
 # Overlays for Thunderbird mail
 overlay chrome://messenger/content/messenger.xul chrome://archive-this/content/main.xul
-overlay	chrome://messenger/content/mailWindowOverlay.xul chrome://archive-this/content/old-context.xul appversion<3.0b3
-overlay	chrome://messenger/content/messenger.xul chrome://archive-this/content/context.xul appversion>=3.0b3
+overlay	chrome://messenger/content/messenger.xul chrome://archive-this/content/context.xul
 

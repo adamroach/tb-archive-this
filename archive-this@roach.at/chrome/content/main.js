@@ -262,7 +262,7 @@ createFilterFromMessage : function()
   uri = gFolderDisplay.selectedMessageUris[0];
 
   window.openDialog('chrome://archive-this/content/filter.xul','filter',
-                    'chrome,modal', 'To or Cc',1,'','',
+                    'chrome,modal,centerscreen', 'To or Cc',1,'','',
                      ArchiveThis['addRule'],
                      header,
                      mdn_extended_createHeadersFromURI(uri));
@@ -432,20 +432,7 @@ bindKeys : function()
 
 getSelectedHeaders : function()
 {
-  var headers = [];
-  if(this.newFolderStyle)
-  {
-    headers = gFolderDisplay.selectedMessages;
-  }
-  else
-  {
-    var selected = GetSelectedMessages();
-    for (var i in selected)
-    {
-      headers.push(messenger.msgHdrFromURI(selected[i]));
-    }
-  }
-  return headers;
+  return gFolderDisplay.selectedMessages;
 },
 
 moveToFolder : function()
@@ -453,7 +440,7 @@ moveToFolder : function()
   var headers = this.getSelectedHeaders();
   if (headers.length == 0) { return; }
   window.openDialog('chrome://archive-this/content/move-copy.xul','move-copy',
-                    'chrome,modal',this,headers,'move');
+                    'chrome,modal,centerscreen',this,headers,'move');
   if (this.selectedFolder)
   {
     this.moveToFolderByUri(this.selectedFolder);
@@ -465,7 +452,7 @@ copyToFolder : function()
   var headers = this.getSelectedHeaders();
   if (headers.length == 0) { return; }
   window.openDialog('chrome://archive-this/content/move-copy.xul','move-copy',
-                    'chrome,modal',this,headers,'copy');
+                    'chrome,modal,centerscreen',this,headers,'copy');
   if (this.selectedFolder)
   {
     this.copyToFolderByUri(this.selectedFolder);
@@ -475,7 +462,7 @@ copyToFolder : function()
 goToFolder : function()
 {
   window.openDialog('chrome://archive-this/content/move-copy.xul','move-copy',
-                    'chrome,modal',this,[],'go');
+                    'chrome,modal,centerscreen',this,[],'go');
   if (this.selectedFolder)
   {
     this.goToFolderByUri(this.selectedFolder);
