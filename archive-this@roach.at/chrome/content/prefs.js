@@ -82,8 +82,8 @@ setPickerElement : function(pickerID,uri)
     return;
   }
   let item = null;
-  let items = picker.children[2].children; // oh god what a hack
-  let id = encodeURI(uri);
+  let items = picker.menupopup.children;
+  let id = uri.replace(/ /g,"%20");
   for (let i = 0; i < items.length; i++) {
     if (items[i].id == id || items[i].id == uri) {
       if (ArchiveThisPrefs.debug)

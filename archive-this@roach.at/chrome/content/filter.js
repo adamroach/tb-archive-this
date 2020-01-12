@@ -1,6 +1,6 @@
 "use strict";
 
-Components.utils.import("resource:///modules/MailUtils.js");
+Components.utils.import("resource:///modules/MailUtils.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
 var ArchiveThisFilter =
@@ -11,36 +11,57 @@ var ArchiveThisFilter =
   console: Components.classes["@mozilla.org/consoleservice;1"].
              getService(Components.interfaces.nsIConsoleService),
 
+  populateFolderList : function()
+  {
+    // The folder picker appears to be gone (!?!), so we just make a list of all
+    // available folders. This is the opposite of awesome, but it appears to be
+    // the best we can do without writing our own picker.
+    let picker = document.getElementById("filterFolder");
+    let accountManager = Components.classes ["@mozilla.org/messenger/account-manager;1"].getService(Components.interfaces.nsIMsgAccountManager);
+    let servers = accountManager.allServers;
+    let numServers = servers.length;
+    for (var i = 0; i <numServers; i++)
+    {
+      let rootFolder = servers.queryElementAt(i,Components.interfaces.nsIMsgIncomingServer,null).rootFolder;
+      if (rootFolder)
+      {
+        var allFolders = rootFolder.descendants;
+        var numFolders = allFolders.length;
+        for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
+        {
+          var folder = allFolders.queryElementAt(folderIndex,Components.interfaces.nsIMsgFolder,null);
+          let menuitem = document.createElement('menuitem');
+          let folderName = folder.prettyName;
+          var p = folder.parent;
+          while (p && p.parent)
+          {
+            folderName = p.name+'/'+folderName;
+            p = p.parent;
+          }
+          menuitem.setAttribute("id", folder.folderURL);
+          menuitem.setAttribute("label", folder.server.prettyName + "/" + folderName);
+          picker.menupopup.appendChild(menuitem);
+        }
+      }
+    }
+  },
+
   SetPickerElement : function(pickerID,uri)
   {
     if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
     var picker = document.getElementById(pickerID);
-    if (!picker)
+    if (!picker || !uri)
       return;
 
-    if (uri)
-    {
-      var msgfolder = MailUtils.getExistingFolder(uri, true);
-      if (msgfolder && msgfolder.canFileMessages)
-      {
-        picker.menupopup.selectFolder(msgfolder);
-        picker.setAttribute("uri",uri);
+    let items = picker.menupopup.children;
+    let id = uri.replace(/ /g,"%20");
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].id == id || items[i].id == uri) {
+        picker.selectedItem = items[i];
         return;
       }
     }
-
-    picker.setAttribute("uri",null);
-    picker.setAttribute("label","-");
-  },
-
-  onFolderPicked : function(selection, pickerID)
-  {
-    var selectedUri = selection.getAttribute('id');
-    // For some reason, the folder picker returns multiple
-    // events when you use "select this folder"
-    if (selectedUri.length == 0) { return; }
-
-    this.SetPickerElement(pickerID,selectedUri);
   },
 
   setComparitor: function(enumValue)
@@ -52,7 +73,7 @@ var ArchiveThisFilter =
   setHeaderName: function(headerName)
   {
     var menu = document.getElementById('archive-this-header-name');
-    var selections = menu.firstChild.childNodes;
+    var selections = document.getElementById('archive-this-header-popup').childNodes;
 
     for (var i=0; i<selections.length; i++)
     {
@@ -67,6 +88,7 @@ var ArchiveThisFilter =
 
   onLoad: function()
   {
+    this.populateFolderList();
     this.setHeaderName(window.arguments[0]);
     this.setComparitor(window.arguments[1]);
     document.getElementById('archive-this-header-value').setAttribute("value",window.arguments[2]);

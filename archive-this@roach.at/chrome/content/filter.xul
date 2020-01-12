@@ -40,9 +40,6 @@
   <script type="application/x-javascript" 
           src="chrome://messenger/content/widgetglue.js"/>
   <script type="application/x-javascript" 
-          src="chrome://messenger/content/virtualFolderProperties.js"/>
-
-  <script type="application/x-javascript" 
           src="chrome://archive-this/content/filter.js"/>
 
 <grid>
@@ -56,7 +53,7 @@
       <hbox>
         <menulist id="archive-this-header-name" 
           oncommand="ArchiveThisFilter.headerNameChanged();">
-          <menupopup>
+          <menupopup id="archive-this-header-popup">
             <menuitem label="To or Cc"/>
             <menuitem label="To"/>
             <menuitem label="From"/>
@@ -96,11 +93,7 @@
     <row>
       <vbox pack="center"><label value="&filter_move_to_folder;"/></vbox>
         <menulist id="filterFolder" displayformat="verbose">
-          <menupopup class="menulist-menupopup"
-                     type="folder" mode="search"
-                     showAccountsFileHere="true"
-                     showFileHereLabel="true"
-                     oncommand="ArchiveThisFilter.onFolderPicked(event.target,'filterFolder')"/>
+          <menupopup id="archive-this-folder-menu-popup" class="menulist-menupopup"/>
         </menulist>
     </row>
   </rows>
