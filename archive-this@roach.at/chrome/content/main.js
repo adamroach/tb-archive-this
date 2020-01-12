@@ -573,3 +573,4 @@ function mdn_extended_createHeadersFromURI(messageURI) {
     return headers;
 }
 
+window.addEventListener('load',ArchiveThis.init.bind(ArchiveThis));

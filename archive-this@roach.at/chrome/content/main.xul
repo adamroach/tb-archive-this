@@ -29,6 +29,7 @@
 -->
 
 <!-- button details -->
+<!-- Button Disabled: it's a lot of work to make this work correctly everywhere.
 <toolbarbutton id="archive-this-button-1"
   tooltiptext="Archive the currently selected message(s)"
   oncommand="ArchiveThis['filter'](true)"
@@ -40,6 +41,7 @@
   </stack>
   <label value="Archive"/>
 </toolbarbutton>
+-->
 
 <!-- keystroke details -->
 <window id="messengerWindow">
@@ -76,10 +78,6 @@
   </keyset>
 
   <keyset id="archive-this-disabled-keys" />
-
-  <script>
-    window.addEventListener('load',function(){ArchiveThis.init();},false);
-  </script>
 </window>
 
 </overlay>
