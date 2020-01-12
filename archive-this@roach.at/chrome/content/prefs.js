@@ -722,6 +722,11 @@ decorateRule : function (rule)
 {
   if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
 
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: decorating rule: " + rule.value);
+  }
+
   var list = document.getElementById('archive-this-filter-list');
   list.ensureElementIsVisible(rule);
   try
@@ -730,10 +735,11 @@ decorateRule : function (rule)
   }
   catch (err)
   {
+    this.console.logStringMessage("Archive This: " + err);
     return;
   }
 
-  var msgfolder = MailUtils.getFolderForURI(val[3], true);
+  var msgfolder = MailUtils.getExistingFolder(val[3], true);
   var folderName;
   if (msgfolder)
   {
@@ -764,8 +770,13 @@ decorateRule : function (rule)
   var tooltip = this.s.getFormattedString ("ruleString"+val[1],
                   [val[0], val[2], folderName]);
 
-  rule.setAttribute('label', val[0] + ": " + val[2]);
+  rule.firstChild.setAttribute('value', val[0] + ": " + val[2]);
   rule.setAttribute("tooltiptext", tooltip);
+  if (this.debug)
+  {
+    this.console.logStringMessage("Archive This: Decorated rule = " +
+      new XMLSerializer().serializeToString(rule));
+  }
   rule.ondblclick=this.openEditFilter;
 },
 

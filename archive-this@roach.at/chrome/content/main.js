@@ -24,7 +24,7 @@ moveToFolderByUri: function(uri)
              + messageUriArray.join(', ') + "] to " + uri);
     }
 
-    var folder = MailUtils.getFolderForURI(uri, false);
+    var folder = MailUtils.getExistingFolder(uri, false);
     MsgMoveMessage(folder);
   }
   else
@@ -51,7 +51,7 @@ copyToFolderByUri: function(uri)
 {
   if(this.newFolderStyle)
   {
-    var folder = MailUtils.getFolderForURI(uri, false);
+    var folder = MailUtils.getExistingFolder(uri, false);
     MsgCopyMessage(folder);
   }
   else
@@ -64,7 +64,7 @@ goToFolderByUri: function(uri)
 {
   if(this.newFolderStyle)
   {
-    var folder = MailUtils.getFolderForURI(uri, false);
+    var folder = MailUtils.getExistingFolder(uri, false);
     gFolderTreeView.selectFolder(folder);
   }
   else
@@ -290,7 +290,7 @@ newFilter: function (createIfNotFound)
     //gFolderDisplay.selectMessage(messageArray[i]);
     if (folderUri.length > 0)
     {
-      //MsgMoveMessage(MailUtils.getFolderForURI(folderUri, false));
+      //MsgMoveMessage(MailUtils.getExistingFolder(folderUri, false));
       //this.moveToFolderByUri(folderUri);
       if (!matches[folderUri])
       {

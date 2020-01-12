@@ -59,7 +59,7 @@
   <tabpanel id="archive-this-filter-tab">
     <hbox flex="1">
       <vbox flex="1">
-        <listbox id="archive-this-filter-list" flex="1"
+        <richlistbox id="archive-this-filter-list" flex="1" height="300"
                 onselect="ArchiveThisPrefs['selectionChanged']();"/>
       </vbox>
       <vbox>

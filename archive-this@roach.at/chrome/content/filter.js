@@ -20,7 +20,7 @@ var ArchiveThisFilter =
 
     if (uri)
     {
-      var msgfolder = MailUtils.getFolderForURI(uri, true);
+      var msgfolder = MailUtils.getExistingFolder(uri, true);
       if (msgfolder && msgfolder.canFileMessages)
       {
         picker.menupopup.selectFolder(msgfolder);
@@ -244,7 +244,7 @@ var ArchiveThisFilter =
       return false;
     }
 
-    var msgfolder = MailUtils.getFolderForURI(folder, true);
+    var msgfolder = MailUtils.getExistingFolder(folder, true);
     if (!msgfolder)
     {
       window.alert(this.s.getString("pleaseSelectFolderString"));
