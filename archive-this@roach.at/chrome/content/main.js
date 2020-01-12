@@ -9,81 +9,32 @@ selectedFolder: null,
 console: Components.classes["@mozilla.org/consoleservice;1"].
            getService(Components.interfaces.nsIConsoleService),
 debug: false,
-newFolderStyle: false,
 overrideKeys: false,
 maxHeaderSize: 8192,
 
 moveToFolderByUri: function(uri)
 {
-  if(this.newFolderStyle)
+  if (this.debug)
   {
-    if (this.debug)
-    {
-        var messageUriArray = gFolderDisplay.selectedMessageUris;
-        this.console.logStringMessage("Archive This: Moving ["
-             + messageUriArray.join(', ') + "] to " + uri);
-    }
+      var messageUriArray = gFolderDisplay.selectedMessageUris;
+      this.console.logStringMessage("Archive This: Moving ["
+           + messageUriArray.join(', ') + "] to " + uri);
+  }
 
-    var folder = MailUtils.getExistingFolder(uri, false);
-    MsgMoveMessage(folder);
-  }
-  else
-  {
-    var messageUriArray = GetSelectedMessages();
-    if (messageUriArray == null || messageUriArray.length == 0)
-    {
-      if (this.debug)
-      {
-        this.console.logStringMessage("Archive This: No selected messages.");
-      }
-      return;
-    }
-    if (this.debug)
-    {
-        this.console.logStringMessage("Archive This: Moving ["
-             + messageUriArray.join(', ') + "] to " + uri);
-    }
-    MsgMoveMessage(uri);
-  }
+  var folder = MailUtils.getExistingFolder(uri, false);
+  MsgMoveMessage(folder);
 },
 
 copyToFolderByUri: function(uri)
 {
-  if(this.newFolderStyle)
-  {
-    var folder = MailUtils.getExistingFolder(uri, false);
-    MsgCopyMessage(folder);
-  }
-  else
-  {
-    MsgCopyMessage(uri);
-  }
+  var folder = MailUtils.getExistingFolder(uri, false);
+  MsgCopyMessage(folder);
 },
 
 goToFolderByUri: function(uri)
 {
-  if(this.newFolderStyle)
-  {
-    var folder = MailUtils.getExistingFolder(uri, false);
-    gFolderTreeView.selectFolder(folder);
-  }
-  else
-  {
-    var view = document.getElementById("folderTree").view;
-    for (var i = 0; i < view.rowCount; ++i)
-    {
-      var resource = view.getResourceAtIndex(i);
-      uri == resource.Value? view.selection.select(i) :
-      uri.indexOf(resource.Value) == 0 && !view.isContainerOpen(i)? view.toggleOpenState(i) : null;
-    }
-
-/*  Not kosher for "use strict" -- I'm leaving it here for now in case the above code breaks...
-    with (document.getElementById("folderTree").view)
-      for (var i = 0; i < rowCount; ++i) with (getResourceAtIndex(i))
-        uri == Value? selection.select(i) :
-        uri.indexOf(Value) == 0 && !isContainerOpen(i)? toggleOpenState(i) : null;
-*/
-  }
+  var folder = MailUtils.getExistingFolder(uri, false);
+  gFolderTreeView.selectFolder(folder);
 },
 
 loadFilters: function()
@@ -209,19 +160,8 @@ moveToSpecialFolder : function (folder)
   var messages = [];
   var messageURIs = [];
 
-  if (this.newFolderStyle)
-  {
-    messages = gFolderDisplay.selectedMessages;
-    messageURIs = gFolderDisplay.selectedMessageUris;
-  }
-  else
-  {
-    messageURIs = GetSelectedMessages();
-    for (var i in messageURIs)
-    {
-      messages[i] = messenger.msgHdrFromURI(messageURIs[i]);
-    }
-  }
+  messages = gFolderDisplay.selectedMessages;
+  messageURIs = gFolderDisplay.selectedMessageUris;
 
   for (var i in messages)
   {
@@ -237,8 +177,7 @@ moveToSpecialFolder : function (folder)
       {
         this.console.logStringMessage("Archive This: Found special folder '"+folder+
           "' for ["+messageURIs[i]+"]: " + cf.URI);
-        if (this.newFolderStyle) { gFolderDisplay.selectMessage(messages[i]); }
-        else { SelectMessage(messageURIs[i]); }
+        gFolderDisplay.selectMessage(messages[i]);
         this.moveToFolderByUri(cf.URI);
         folderIndex = numFolders;
       }
@@ -254,14 +193,7 @@ filter: function(createIfNotFound)
   {
     this.console.logStringMessage("Archive This: executing filters");
   }
-  if(this.newFolderStyle)
-  {
-    this.newFilter(createIfNotFound);
-  }
-  else
-  {
-    this.oldFilter(createIfNotFound);
-  }
+  this.newFilter(createIfNotFound);
 },
 
 // This is the function for 3.0b3, which changed the folder interface
@@ -321,65 +253,13 @@ newFilter: function (createIfNotFound)
   }
 },
 
-// This is the function for 2.0 through 3.0b2
-oldFilter: function (createIfNotFound)
-{
-  if (!this.prefs) { this.loadPrefs(); }
-
-  var folderUri;
-  var messageArray = GetSelectedMessages();
-  if (!messageArray)
-  {
-    return;
-  }
-
-  var selectArray = [];
-  var header;
-  for (var i = 0; i < messageArray.length; i++)
-  {
-    header = messenger.msgHdrFromURI(messageArray[i]);
-    folderUri = this.findFolderUri(messageArray[i], header);
-    SelectMessage(messageArray[i]);
-    if (folderUri.length > 0)
-    {
-      //MsgMoveMessage(folderUri);
-      this.moveToFolderByUri(folderUri);
-    }
-    else
-    {
-      selectArray[selectArray.length] = header.messageKey;
-
-      if (messageArray.length == 1 && createIfNotFound)
-      {
-        this.createFilterFromMessage();
-      }
-    }
-  };
-
-  // Can't figure out how to select more than one message...
-  if (selectArray.length > 0)
-  {
-    gDBView.selectMsgByKey(selectArray[0]);
-  }
-},
-
-
 createFilterFromMessage : function()
 {
   var header;
   var uri;
 
-  if(this.newFolderStyle)
-  {
-    header = gFolderDisplay.selectedMessages[0];
-    uri = gFolderDisplay.selectedMessageUris[0];
-  }
-  else
-  {
-    var messageArray = GetSelectedMessages();
-    uri = messageArray[0];
-    header = messenger.msgHdrFromURI(uri);
-  }
+  header = gFolderDisplay.selectedMessages[0];
+  uri = gFolderDisplay.selectedMessageUris[0];
 
   window.openDialog('chrome://archive-this/content/filter.xul','filter',
                     'chrome,modal', 'To or Cc',1,'','',
@@ -442,15 +322,7 @@ observe: function(subject, topic, data)
 init : function ()
 {
   ArchiveThisKeyUtils.init();
-
-  var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
-                          .getService(Components.interfaces.nsIXULAppInfo);
-  var versionChecker = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-                                 .getService(Components.interfaces.nsIVersionComparator);
-  this.newFolderStyle = (versionChecker.compare(appInfo.version, "3.0b3") >= 0)
-
   if (!this.prefs) { this.loadPrefs(); }
-
   this.bindKeys();
 },
 
