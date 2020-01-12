@@ -67,9 +67,36 @@ setAppleCommand : function(ch) { this.apple_command = ch },
 
 setPickerElement : function(pickerID,uri)
 {
+  if (ArchiveThisPrefs.debug)
+  {
+    ArchiveThisPrefs.console.logStringMessage("Archive This: " +
+      "Setting picker " + pickerID + " to " + uri);
+  }
+
   var picker = document.getElementById(pickerID);
-  if (!picker)
+  if (!picker) {
+    ArchiveThisPrefs.console.logStringMessage("Archive This: " +
+      "Could not find picker " + pickerID);
     return;
+  }
+  let item = null;
+  let items = picker.children[2].children; // oh god what a hack
+  let id = encodeURI(uri);
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].id == id) {
+      if (ArchiveThisPrefs.debug)
+      {
+        ArchiveThisPrefs.console.logStringMessage("Archive This: " +
+          "Item " + i + " matches");
+      }
+      item = items[i];
+    }
+  }
+
+  if (item) {
+    picker.selectedItem = item;
+  }
+  return;
 
   if (uri && uri.indexOf("special:") == 0)
   {
@@ -100,6 +127,11 @@ setPickerElement : function(pickerID,uri)
 
 initPicker : function(pickerID)
 {
+  if (ArchiveThisPrefs.debug)
+  {
+    ArchiveThisPrefs.console.logStringMessage( "Archive This: " +
+      "Initializing picker " + pickerID);
+  }
   if (this.ms == null) { this.ms = document.getElementById("bundle_messenger"); }
   var picker = document.getElementById(pickerID);
   if (!picker)
@@ -107,8 +139,44 @@ initPicker : function(pickerID)
 
   var folders = ['Inbox', 'Trash', 'Sent', 'Drafts', 'Templates'];
   var menupopup = picker.menupopup;
-  if (!menupopup)
+  if (!menupopup) {
+    ArchiveThisPrefs.console.logStringMessage("Archive This: " +
+      "Could not find menupopup for picker " + pickerID);
     return;
+  }
+
+  // The folder picker appears to be gone (!?!), so we just make a list of all
+  // available folders. This is the opposite of awesome, but it appears to be
+  // the best we can do without writing our own picker.
+  let accountManager = Components.classes ["@mozilla.org/messenger/account-manager;1"].getService(Components.interfaces.nsIMsgAccountManager);
+  let servers = accountManager.allServers;
+  let numServers = servers.length;
+  for (var i = 0; i <numServers; i++)
+  {
+    let rootFolder = servers.queryElementAt(i,Components.interfaces.nsIMsgIncomingServer,null).rootFolder;
+    if (rootFolder)
+    {
+      var allFolders = rootFolder.descendants;
+      var numFolders = allFolders.length;
+      for (var folderIndex = 0; folderIndex < numFolders; folderIndex++)
+      {
+        var folder = allFolders.queryElementAt(folderIndex,Components.interfaces.nsIMsgFolder,null);
+        let menuitem = document.createElement('menuitem');
+        let folderName = folder.prettyName;
+        var p = folder.parent;
+        while (p && p.parent)
+        {
+          folderName = p.name+'/'+folderName;
+          p = p.parent;
+        }
+        menuitem.setAttribute("id", folder.folderURL);
+        menuitem.setAttribute("label", folder.server.prettyName + "/" + folderName);
+        menuitem.oncommand = function () { ArchiveThisPrefs.onFolderPicked(event.target,pickerID); };
+        menupopup.appendChild(menuitem);
+      }
+    }
+
+  }
 
   menupopup.appendChild(document.createElement('menuseparator'));
 
@@ -722,11 +790,6 @@ decorateRule : function (rule)
 {
   if (this.s == null) { this.s = document.getElementById("archive-this-string-bundle"); }
 
-  if (this.debug)
-  {
-    this.console.logStringMessage("Archive This: decorating rule: " + rule.value);
-  }
-
   var list = document.getElementById('archive-this-filter-list');
   list.ensureElementIsVisible(rule);
   try
@@ -772,7 +835,7 @@ decorateRule : function (rule)
 
   rule.firstChild.setAttribute('value', val[0] + ": " + val[2]);
   rule.setAttribute("tooltiptext", tooltip);
-  if (this.debug)
+  if (false && this.debug)
   {
     this.console.logStringMessage("Archive This: Decorated rule = " +
       new XMLSerializer().serializeToString(rule));
